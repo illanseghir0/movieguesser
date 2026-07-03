@@ -1,0 +1,7 @@
+# cache du scraper (régénérable)
+films_cache.json
+posters/
+
+# environnement local
+.claude/
+.DS_Store

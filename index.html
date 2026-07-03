@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guess the Rank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+<div id="backdrop"><img id="bdImg" alt=""></div>
+<div class="spot"></div>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="billing">A Letterboxd Game</div>
+    <h1>Guess the Rank</h1>
+    <div class="rule"><span id="dataTag">aucune liste chargée</span></div>
+  </header>
+
+  <!-- ====================== HOME ====================== -->
+  <section id="home">
+    <div class="tagline">Deux cinéphiles, une liste culte.<br>
+      Un film s'affiche — <b>qui devinera son rang au plus près ?</b></div>
+
+    <div class="panel">
+      <div class="field">
+        <label>Le classement à deviner</label>
+        <div class="urlrow">
+          <input type="text" id="listUrl" spellcheck="false"
+            value="https://letterboxd.com/official/list/letterboxds-top-500-films/"
+            placeholder="https://letterboxd.com/…/list/…">
+          <button id="loadList">Charger</button>
+        </div>
+        <div class="srcnote">Colle l'URL de n'importe quelle liste Letterboxd classée
+          (ex. <i>top-250-films-with-the-most-fans</i>).</div>
+        <div class="statusWrap"><span class="statusChip hidden" id="status"></span></div>
+      </div>
+
+      <div class="row2" style="margin-top:6px">
+        <div class="field" style="margin-bottom:0">
+          <label>Joueur 1</label>
+          <input type="text" id="n1" value="Joueur 1" maxlength="18">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Joueur 2</label>
+          <input type="text" id="n2" value="Joueur 2" maxlength="18">
+        </div>
+      </div>
+
+      <div class="btnrow" style="margin-top:28px">
+        <button class="big" id="start" disabled>Lancer le duel</button>
+        <button class="ghost" id="openSettings">Paramètres</button>
+      </div>
+    </div>
+
+    <div class="strip"></div>
+    <div class="quote"><span id="qt"></span><span class="qa" id="qa"></span></div>
+  </section>
+
+  <!-- ====================== SETTINGS ====================== -->
+  <section id="settings" class="panel hidden">
+    <div class="setHead">Paramètres</div>
+
+    <div class="field">
+      <label>Mode de jeu</label>
+      <div class="seg" id="segMode">
+        <div class="s" data-v="rounds">Nombre de manches</div>
+        <div class="s" data-v="points">Course aux points</div>
+      </div>
+      <div class="modeNote" id="modeNote"></div>
+    </div>
+
+    <div class="field" id="fRounds">
+      <label>Manches</label>
+      <div class="rounds" id="rounds">
+        <div class="r" data-r="5">5</div>
+        <div class="r" data-r="10">10</div>
+        <div class="r" data-r="15">15</div>
+        <div class="r" data-r="20">20</div>
+        <input type="number" id="roundsCustom" min="1" max="99" inputmode="numeric" title="Nombre personnalisé">
+      </div>
+    </div>
+
+    <div class="field hidden" id="fTarget">
+      <label>Objectif de points</label>
+      <div class="rounds" id="targets">
+        <div class="r" data-t="500">500</div>
+        <div class="r" data-t="1000">1000</div>
+        <div class="r" data-t="2000">2000</div>
+        <input type="number" id="targetCustom" min="50" max="99999" inputmode="numeric" title="Objectif personnalisé">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Qui devine en premier ?</label>
+      <div class="seg" id="segStart">
+        <div class="s" data-v="alt">Alterné</div>
+        <div class="s" data-v="random">Aléatoire</div>
+        <div class="s" data-v="fixed">Toujours J1</div>
+      </div>
+    </div>
+
+    <details class="alt">
+      <summary>Données locales : charger un films.json (scrape.py)</summary>
+      <div class="drop" id="drop">
+        Glisse ton <b>films.json</b> ici, ou clique pour le choisir.
+        <input type="file" id="file" accept="application/json,.json" class="hidden">
+      </div>
+    </details>
+
+    <div class="btnrow" style="margin-top:26px">
+      <button class="big" id="backHome">Retour au jeu</button>
+    </div>
+  </section>
+
+  <!-- ====================== PLAY ====================== -->
+  <section id="play" class="hidden">
+    <div class="score">
+      <div class="pl p1"><div class="name" id="sn1">Joueur 1</div><div class="pts" id="sp1">0</div></div>
+      <div class="mid"><span id="midLbl">Manche</span><b id="roundLbl">1 / 10</b><div class="prog"><i id="progFill"></i></div></div>
+      <div class="pl p2"><div class="name" id="sn2">Joueur 2</div><div class="pts" id="sp2">0</div></div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="posterZone" id="posterZone">
+        <img class="glow" id="posterGlow" alt="" style="display:none">
+        <div class="poster" id="poster"></div>
+      </div>
+      <div class="tcard" id="filmInfo"></div>
+
+      <!-- guess phase -->
+      <div id="guessBox">
+        <div class="prompt" id="prompt"></div>
+        <div class="hint" id="hint">Son rang — entre 1 et 500</div>
+        <div class="guess" id="guessWrap">
+          <input type="number" id="guessInput" min="1" max="500" step="1" inputmode="numeric" placeholder="1–500">
+          <button id="validate">Valider</button>
+        </div>
+      </div>
+
+      <!-- reveal phase -->
+      <div id="revealBox" class="reveal hidden">
+        <div class="rankLbl">Vrai classement</div>
+        <div class="truerank dim" id="trueRankBig"># ?</div>
+        <div class="title" id="filmTitle"></div>
+        <div class="dir" id="revealDir"></div>
+        <div id="filmLink" style="margin-top:8px;font-size:12px;letter-spacing:.08em"></div>
+        <div class="line-wrap" id="lineWrap">
+          <div class="axis"><div class="fill" id="axisFill"></div></div>
+          <div class="mark m1" id="markP1"><div class="bub" id="bubP1"></div><div class="pin"></div></div>
+          <div class="mark m2" id="markP2"><div class="bub" id="bubP2"></div><div class="pin"></div></div>
+          <div class="mark mt" id="markT"><div class="bub" id="bubT"></div><div class="pin"></div></div>
+          <div class="ticks" id="ticks"><span>1</span><span>125</span><span>250</span><span>375</span><span>500</span></div>
+        </div>
+        <div class="verdict" id="verdict"></div>
+        <div class="gaps" id="gaps"></div>
+        <div class="btnrow">
+          <button class="big hidden" id="next">Manche suivante</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btnrow" style="margin-top:22px">
+      <button class="ghost" id="quit">Abandonner</button>
+    </div>
+  </section>
+
+  <!-- ====================== END ====================== -->
+  <section id="end" class="hidden">
+    <div class="credits-lbl">— Générique de fin —</div>
+    <div class="winner" id="winner"></div>
+    <div class="finalScore">
+      <div class="f1"><span class="fname" id="en1">Joueur 1</span>&nbsp;&nbsp;<span class="fpts" id="ep1">0</span></div>
+      <div class="fvs">VS</div>
+      <div class="f2"><span class="fpts" id="ep2">0</span>&nbsp;&nbsp;<span class="fname" id="en2">Joueur 2</span></div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="rec" id="recap"></div>
+    <div class="btnrow" style="margin-top:28px">
+      <button class="big" id="rematch">Revanche</button>
+      <button class="ghost" id="again">Retour à l'accueil</button>
+    </div>
+  </section>
+
+  <footer>
+    Hot-seat sur un seul écran · estimations cachées jusqu'à la révélation<br>
+    d'après les listes publiques Letterboxd
+  </footer>
+</div>
+
+<!-- ====================== HANDOFF : ENTRACTE ====================== -->
+<div id="handoff" class="handoff hidden">
+  <div class="inner">
+    <div class="pass">Entracte</div>
+    <div class="rule"></div>
+    <div class="to">Passe l'écran à</div>
+    <div class="who" id="handoffName"></div>
+    <div class="peek">…sans regarder la réponse de l'autre 👀</div>
+    <button class="big" id="handoffGo">C'est à moi</button>
+  </div>
+</div>
+
+<!-- ordre de chargement : helpers -> données -> réglages -> jeu -> accueil/boot -->
+<script src="js/utils.js"></script>
+<script src="js/letterboxd.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
