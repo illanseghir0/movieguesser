@@ -92,6 +92,20 @@ describe("list store — catalogue et sélection", () => {
     vi.unstubAllGlobals();
   });
 
+  it("n'appelle aucun proxy pour les films déjà enrichis en DB", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const enriched: Film[] = seed(2).map((f) => ({
+      ...f, poster: "https://a.ltrbxd.com/resized/film-poster/x.jpg", director: "Quelqu'un",
+    }));
+    const list = useListStore();
+    await list.selectList(entry(enriched));
+    await list.ensureMeta(list.films![0]);
+    await list.ensureMeta(list.films![1]);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
   it("marque affiche/réalisateur comme absents si tous les proxys échouent", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
     const list = useListStore();

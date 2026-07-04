@@ -141,6 +141,11 @@ export const useListStore = defineStore("list", () => {
               rank: +f.rank, title: String(f.title), year: f.year ?? null,
               slug: f.slug ?? null,
               url: f.slug ? `https://letterboxd.com/film/${f.slug}/` : null,
+              // affiche + réalisateur enrichis à l'ingestion : si présents,
+              // aucun proxy n'est appelé pendant la partie ; si la clé est
+              // absente (anciennes données), on garde le chemin paresseux
+              ...("poster" in f ? { poster: f.poster ?? null } : {}),
+              ...("director" in f ? { director: f.director ?? null } : {}),
             })),
           }));
           return;

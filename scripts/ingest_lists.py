@@ -8,15 +8,19 @@ Usage (équipe du jeu, pour ajouter/mettre à jour des classements) :
     2. python3 scripts/ingest_lists.py
     3. Coller supabase/seed_lists.sql dans le SQL Editor du dashboard Supabase
 
-Les films sont stockés en JSONB (rank/title/year/slug) ; les affiches et
-réalisateurs sont récupérés à la volée par le client pendant les parties.
+Les films sont stockés en JSONB enrichi (rank/title/year/slug/poster/director) :
+l'affiche portrait et le réalisateur viennent de la page de chaque film
+(JSON-LD), si bien que le client n'a AUCUN proxy à appeler pendant les parties.
+Un cache disque (.meta_cache.json) rend les ré-exécutions quasi instantanées.
 La cover du carrousel est l'og:image de la page de la liste.
 """
 
 import json
 import re
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import requests
@@ -35,7 +39,82 @@ HEADERS = {
     "Accept-Language": "en;q=0.9",
 }
 DELAY = 0.4
+WORKERS = 3            # enrichissement des pages film : parallélisme poli
 OUT = Path(__file__).resolve().parent.parent / "supabase" / "seed_lists.sql"
+META_CACHE = Path(__file__).resolve().parent / ".meta_cache.json"
+
+LD_RE = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
+
+
+def film_meta(slug: str) -> dict:
+    """Affiche portrait (JSON-LD), réalisateur (2 max) et année d'un film."""
+    html = get(f"https://letterboxd.com/film/{slug}/")
+    poster = director = None
+    year = None
+    m = LD_RE.search(html)
+    if m:
+        try:
+            ld = json.loads(re.sub(r"/\*.*?\*/", "", m.group(1), flags=re.S))
+            img = ld.get("image")
+            poster = img if isinstance(img, str) else None
+            d = ld.get("director") or []
+            if isinstance(d, dict):
+                d = [d]
+            names = [x.get("name") for x in d if isinstance(x, dict) and x.get("name")]
+            director = " & ".join(names[:2]) or None
+        except (ValueError, TypeError):
+            pass
+    if not poster:  # secours : og:image (crop paysage, mieux que rien)
+        m2 = re.search(r'<meta property="og:image" content="([^"]+)"', html)
+        poster = m2.group(1) if m2 else None
+    m3 = re.search(r'<meta property="og:title" content="[^"(]*\((\d{4})\)', html)
+    if m3:
+        year = int(m3.group(1))
+    return {"poster": poster, "director": director, "year": year}
+
+
+def enrich(entries: list) -> None:
+    """Complète tous les films de toutes les listes (cache disque par slug)."""
+    cache: dict = {}
+    if META_CACHE.exists():
+        cache = json.loads(META_CACHE.read_text(encoding="utf-8"))
+    by_slug: dict = {}
+    for e in entries:
+        for f in e["films"]:
+            by_slug.setdefault(f["slug"], f)
+    todo = [s for s in by_slug if s not in cache]
+    print(f"  {len(by_slug)} films uniques, {len(todo)} à récupérer "
+          f"({len(by_slug) - len(todo)} en cache)")
+
+    lock = threading.Lock()
+    done = 0
+
+    def work(slug: str) -> None:
+        nonlocal done
+        try:
+            meta = film_meta(slug)
+        except Exception:
+            meta = {"poster": None, "director": None, "year": None}
+        with lock:
+            cache[slug] = meta
+            done += 1
+            if done % 50 == 0:
+                print(f"    {done} / {len(todo)}", flush=True)
+                META_CACHE.write_text(json.dumps(cache, ensure_ascii=False),
+                                      encoding="utf-8")
+        time.sleep(DELAY)
+
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+        list(ex.map(work, todo))
+    META_CACHE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+    for e in entries:
+        for f in e["films"]:
+            meta = cache.get(f["slug"]) or {}
+            f["poster"] = meta.get("poster")
+            f["director"] = meta.get("director")
+            if not f.get("year") and meta.get("year"):
+                f["year"] = meta["year"]
 
 
 def get(url: str) -> str:
@@ -87,10 +166,14 @@ def sql_str(s):
 
 def main():
     entries = []
+    print("1/2 Lecture des listes…")
     for url in LISTS:
         print(f"  {url}")
         entries.append(scrape_list(url))
         print(f"    -> {entries[-1]['title']} : {len(entries[-1]['films'])} films")
+
+    print("2/2 Enrichissement (affiches portrait + réalisateurs)…")
+    enrich(entries)
 
     parts = ["""-- généré par scripts/ingest_lists.py — à coller dans le SQL Editor Supabase
 -- (idempotent : crée la table au besoin, met à jour les listes existantes)
