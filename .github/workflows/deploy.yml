@@ -42,7 +42,15 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.attempt1.outputs.page_url || steps.deployment.outputs.page_url }}
     steps:
+      # deploy-pages échoue parfois de façon transitoire ("try again later") :
+      # première tentative tolérée, seconde si besoin
+      - id: attempt1
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.attempt1.outcome == 'failure'
+        run: sleep 30
       - id: deployment
+        if: steps.attempt1.outcome == 'failure'
         uses: actions/deploy-pages@v4
