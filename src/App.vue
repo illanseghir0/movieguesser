@@ -42,11 +42,6 @@ onMounted(() => {
     <ProfileScreen v-else-if="game.screen === 'profile'" />
     <PlayScreen v-else-if="game.screen === 'play'" />
     <EndScreen v-else />
-
-    <footer>
-      Hot-seat sur un seul écran · estimations cachées jusqu'à la révélation<br>
-      d'après les listes publiques Letterboxd
-    </footer>
   </div>
 
   <HandoffOverlay v-if="game.handoffOpen" />

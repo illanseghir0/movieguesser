@@ -19,7 +19,7 @@ body{
   padding:34px 18px 56px; overflow-x:hidden;
 }
 a{color:var(--p2);text-decoration:none} a:hover{text-decoration:underline}
-.wrap{width:100%; max-width:880px; position:relative; z-index:1}
+.wrap{width:100%; max-width:1200px; position:relative; z-index:1}
 
 /* ---- backdrop : l'affiche floutée en pleine page ---- */
 #backdrop{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
@@ -55,15 +55,10 @@ header.bar .billing{font-size:11px;font-weight:600;letter-spacing:.34em;text-tra
   color:var(--muted);margin-bottom:10px}
 header.bar h1{
   font-family:var(--display); font-weight:400; letter-spacing:.06em; text-transform:uppercase;
-  font-size:clamp(44px,10vw,76px); margin:0; line-height:.92; color:var(--cream);
+  font-size:clamp(44px,9vw,88px); margin:0; line-height:.92; color:var(--cream);
   text-shadow:0 1px 0 rgba(0,0,0,.5), 0 0 44px rgba(242,234,214,.1);
   cursor:pointer;
 }
-header.bar .rule{display:flex;align-items:center;gap:14px;justify-content:center;
-  margin-top:14px;color:var(--muted);font-size:11px;letter-spacing:.22em;text-transform:uppercase}
-header.bar .rule::before, header.bar .rule::after{content:"";height:1px;width:64px;
-  background:linear-gradient(90deg,transparent,var(--line));}
-header.bar .rule::after{background:linear-gradient(90deg,var(--line),transparent)}
 
 section{animation:fadeUp .45s ease both}
 
@@ -71,9 +66,6 @@ section{animation:fadeUp .45s ease both}
 .tagline{text-align:center;font-family:var(--serif);font-style:italic;font-size:18px;
   color:#cfc4ad;line-height:1.7;max-width:520px;margin:0 auto 10px}
 .tagline b{color:var(--cream);font-weight:600}
-.affiche{text-align:center;color:var(--muted);font-size:11px;letter-spacing:.24em;
-  text-transform:uppercase;margin-top:14px}
-.affiche b{color:var(--true);font-weight:600}
 .strip{height:24px;margin:34px auto 20px;max-width:440px;position:relative;opacity:.45;
   border-top:2px solid var(--line);border-bottom:2px solid var(--line)}
 .strip::before{content:"";position:absolute;inset:5px 0;
@@ -141,28 +133,19 @@ button.big{font-size:13px;padding:17px 40px;
 .rounds input[type=number]:focus{outline:none;border-bottom-color:var(--text)}
 .modeNote{color:var(--muted);font-size:12px;margin-top:10px;line-height:1.6}
 
-.urlrow{display:flex;gap:12px;align-items:flex-end}
+.urlrow{display:flex;gap:12px;align-items:flex-end;max-width:820px}
 .urlrow input{flex:1;font-size:14px!important}
 .urlrow button{padding:12px 22px;flex-shrink:0}
 .srcnote{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.5}
 
-details.alt{margin-top:18px}
-details.alt summary{color:var(--muted);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
-  cursor:pointer;user-select:none}
-details.alt summary:hover{color:var(--text)}
-.drop{border:1px dashed rgba(255,255,255,.2);border-radius:6px;padding:18px;text-align:center;
-  color:var(--muted);font-size:13px;cursor:pointer;margin-top:12px;
-  transition:border-color .15s,background .15s}
-.drop:hover,.drop.over{border-color:var(--p2);background:rgba(64,188,244,.05)}
-.drop b{color:var(--text)}
 
 .hidden{display:none!important}
-footer{color:var(--muted);font-size:11px;margin-top:36px;text-align:center;line-height:2;
-  letter-spacing:.14em;text-transform:uppercase;position:relative;z-index:1}
 
 /* ---- mobile ---- */
 @media (max-width:560px){
   body{padding:20px 12px 40px}
+  .topbar{top:10px;right:12px}
+  .cornerNav{top:10px;left:12px}
   .panel{padding:22px 16px}
   .row2{gap:16px}
   .urlrow{flex-direction:column;align-items:stretch}
@@ -171,12 +154,15 @@ footer{color:var(--muted);font-size:11px;margin-top:36px;text-align:center;line-
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-/* ---- topbar profil (Supabase) ---- */
-.topbar{position:absolute;top:-16px;right:0;display:flex;gap:8px;align-items:center;z-index:5}
+/* ---- coins de navigation fixes ---- */
+.topbar{position:fixed;top:18px;right:26px;display:flex;gap:8px;align-items:center;z-index:40}
+.cornerNav{position:fixed;top:18px;left:26px;z-index:40}
 button.mini{padding:7px 13px;font-size:10px;letter-spacing:.14em}
 .profileChip{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--text);
-  border:1px solid var(--line);border-radius:99px;padding:6px 13px}
+  letter-spacing:.1em;text-transform:uppercase;color:var(--text);cursor:pointer;
+  border:1px solid var(--line);border-radius:99px;padding:6px 13px;
+  background:rgba(10,13,16,.55);backdrop-filter:blur(6px)}
+.profileChip:hover{border-color:rgba(255,255,255,.3)}
 .profileChip .u{color:var(--p1)}
 
 /* ---- modal (connexion / profil) ---- */
@@ -195,21 +181,13 @@ button.mini{padding:7px 13px;font-size:10px;letter-spacing:.14em}
    ============================================================ */
 
 /* ---- menu-sommaire de l'accueil (façon programme de cinéma) ---- */
-.menu{margin:36px 0 6px;border-top:1px solid var(--line)}
-.menuRow{display:flex;align-items:baseline;gap:16px;padding:22px 6px;
+.menu{margin:40px 0 6px;border-top:1px solid var(--line)}
+.menuRow{display:flex;align-items:baseline;padding:26px 10px;
   border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
-.menuRow .num{font-family:var(--display);color:var(--true);font-size:15px;
-  letter-spacing:.14em;flex-shrink:0;width:30px}
-.menuRow .lbl{font-family:var(--display);font-size:clamp(24px,4.8vw,38px);letter-spacing:.05em;
+.menuRow .lbl{font-family:var(--display);font-size:clamp(30px,5vw,54px);letter-spacing:.05em;
   text-transform:uppercase;line-height:1;color:var(--text);
-  transition:transform .25s ease,color .2s ease}
-.menuRow .arr{font-family:var(--display);font-size:24px;color:var(--true);line-height:1;
-  opacity:0;transform:translateX(-10px);transition:opacity .25s ease,transform .25s ease}
-.menuRow .sub{margin-left:auto;color:var(--muted);font-size:10px;letter-spacing:.18em;
-  text-transform:uppercase;text-align:right;max-width:44%;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap}
-.menuRow:hover .lbl,.menuRow:focus-visible .lbl{transform:translateX(6px);color:var(--cream)}
-.menuRow:hover .arr,.menuRow:focus-visible .arr{opacity:1;transform:none}
+  transition:transform .3s cubic-bezier(.2,.7,.2,1),color .2s ease}
+.menuRow:hover .lbl,.menuRow:focus-visible .lbl{transform:translateX(14px);color:var(--cream)}
 
 /* ---- les règles en trois actes ---- */
 .acts{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;
@@ -253,7 +231,6 @@ button.mini{padding:7px 13px;font-size:10px;letter-spacing:.14em}
 
 @media (max-width:560px){
   .acts{grid-template-columns:1fr;gap:20px}
-  .menuRow .sub{display:none}
   .mstats{grid-template-columns:1fr 1fr}
   .mstats .ms{border-bottom:1px solid var(--line)}
   .mstats .ms:nth-child(even){border-right:none}

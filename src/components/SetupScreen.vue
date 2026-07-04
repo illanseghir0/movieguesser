@@ -14,18 +14,6 @@ const settings = useSettingsStore();
 const url = ref(list.defaultUrl);
 watch(() => list.defaultUrl, (u) => { url.value = u; });
 
-const over = ref(false);
-const fileInput = ref<HTMLInputElement | null>(null);
-function onDrop(e: DragEvent) {
-  over.value = false;
-  const f = e.dataTransfer?.files[0];
-  if (f) list.loadJSONFile(f);
-}
-function onPick(e: Event) {
-  const f = (e.target as HTMLInputElement).files?.[0];
-  if (f) list.loadJSONFile(f);
-}
-
 /* ---- 02 · les joueurs ---- */
 const n1 = ref(game.names[0]);
 const n2 = ref(game.names[1]);
@@ -65,15 +53,6 @@ function setTargetCustom(e: Event) {
           <span class="dotc"></span><span>{{ list.status.msg }}</span>
         </span>
       </div>
-      <details class="alt">
-        <summary>Ou charger un films.json local (scrape.py)</summary>
-        <div class="drop" :class="{ over }" @click="fileInput?.click()"
-             @dragenter.prevent="over = true" @dragover.prevent="over = true"
-             @dragleave.prevent="over = false" @drop.prevent="onDrop">
-          Glisse ton <b>films.json</b> ici, ou clique pour le choisir.
-          <input ref="fileInput" type="file" accept="application/json,.json" class="hidden" @change="onPick">
-        </div>
-      </details>
     </div>
 
     <div class="actLbl">02 · Les joueurs</div>
@@ -129,7 +108,6 @@ function setTargetCustom(e: Event) {
 
     <div class="btnrow" style="margin-top:32px">
       <button class="big" :disabled="!list.ready" @click="game.start(n1, n2)">Lancer la séance</button>
-      <button class="linkBtn" @click="game.goHome()">← retour à l'accueil</button>
     </div>
   </section>
 </template>

@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useGameStore } from "../stores/game";
-import { useListStore } from "../stores/list";
 import { useProfileStore } from "../stores/profile";
 
 const game = useGameStore();
-const list = useListStore();
 const profile = useProfileStore();
 
 const showRules = ref(false);
@@ -30,34 +28,20 @@ onMounted(() => { quote.value = QUOTES[(Math.random() * QUOTES.length) | 0]; });
 
 <template>
   <section>
-    <div class="tagline">Deux cinéphiles, une liste culte.<br>
-      Un film s'affiche — <b>qui devinera son rang au plus près ?</b></div>
-
-    <div v-if="list.ready" class="affiche">À l'affiche : <b>{{ list.listTitle }}</b> · {{ list.films!.length }} films</div>
+    <div class="tagline">Un film s'affiche — <b>qui devine son rang exact ?</b></div>
 
     <nav class="menu">
       <div class="menuRow" role="button" tabindex="0"
            @click="game.goSetup()" @keydown.enter="game.goSetup()">
-        <span class="num">01</span>
         <span class="lbl">Nouvelle séance</span>
-        <span class="arr">→</span>
-        <span class="sub">{{ list.ready ? list.listTitle : "choisis ton classement" }}</span>
       </div>
       <div v-if="profile.enabled" class="menuRow" role="button" tabindex="0"
            @click="game.goProfile()" @keydown.enter="game.goProfile()">
-        <span class="num">02</span>
         <span class="lbl">Carte de membre</span>
-        <span class="arr">→</span>
-        <span class="sub">{{ profile.profile
-          ? `${profile.profile.username} · ${profile.profile.games_won} victoires`
-          : "rejoindre le club" }}</span>
       </div>
       <div class="menuRow" role="button" tabindex="0"
            @click="showRules = !showRules" @keydown.enter="showRules = !showRules">
-        <span class="num">{{ profile.enabled ? "03" : "02" }}</span>
-        <span class="lbl">Comment jouer</span>
-        <span class="arr">{{ showRules ? "↑" : "↓" }}</span>
-        <span class="sub">les règles, en trois actes</span>
+        <span class="lbl" :style="showRules ? 'color:var(--cream)' : ''">Comment jouer</span>
       </div>
     </nav>
 

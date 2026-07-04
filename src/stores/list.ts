@@ -21,8 +21,6 @@ export const useListStore = defineStore("list", () => {
   const ready = computed(() => !!films.value?.length);
   const maxRank = computed(() =>
     films.value?.length ? films.value[films.value.length - 1].rank : 500);
-  const headerTag = computed(() =>
-    films.value ? `${listTitle.value} · ${films.value.length} films` : "aucune liste chargée");
 
   function setStatus(type: StatusType, msg: string) { status.value = { type, msg }; }
 
@@ -91,7 +89,7 @@ export const useListStore = defineStore("list", () => {
     }
   }
 
-  /* ---- films.json (secours local, produit par scrape.py) ---- */
+  /* ---- films.json pré-scrapé, servi à côté de la page (liste par défaut) ---- */
   function normFilms(data: any[]): Film[] {
     return data
       .map((d) => ({
@@ -103,33 +101,19 @@ export const useListStore = defineStore("list", () => {
       .sort((a, b) => a.rank - b.rank);
   }
 
-  function loadJSONFile(f: File) {
-    const fr = new FileReader();
-    fr.onload = () => {
-      try {
-        const data = JSON.parse(String(fr.result));
-        if (!Array.isArray(data) || !data.length) throw 0;
-        applyList(normFilms(data), "films.json", null);
-        setStatus("ok", `films.json · ${data.length} films`);
-      } catch {
-        setStatus("err", "Fichier illisible — attendu : le films.json de scrape.py");
-      }
-    };
-    fr.readAsText(f);
-  }
-
-  /* ---- boot : films.json à côté de la page, sinon dernière liste jouée ---- */
+  /* ---- boot : dernière liste jouée, sinon le Top 500 par défaut ---- */
   async function boot(): Promise<string | null> {
+    const savedLast = localStorage.getItem("duelLast");
+    if (savedLast && loadFromCache(savedLast)) { defaultUrl.value = savedLast; return savedLast; }
     try {
       const r = await fetch(import.meta.env.BASE_URL + "films.json");
       const d = r.ok ? await r.json() : null;
       if (d && Array.isArray(d) && d.length) {
-        applyList(normFilms(d), "films.json", null);
+        applyList(normFilms(d), "Letterboxd's Top 500 Films", null);
+        setStatus("ok", `Letterboxd's Top 500 Films · ${films.value!.length} films`);
         return null;
       }
     } catch { /* pas de films.json servi */ }
-    const last = localStorage.getItem("duelLast");
-    if (last && loadFromCache(last)) { defaultUrl.value = last; return last; }
     return null;
   }
 
@@ -156,7 +140,7 @@ export const useListStore = defineStore("list", () => {
   }
 
   return {
-    films, listTitle, listKey, status, loading, ready, maxRank, headerTag, defaultUrl,
-    setStatus, loadList, loadJSONFile, boot, ensureMeta,
+    films, listTitle, listKey, status, loading, ready, maxRank, defaultUrl,
+    setStatus, loadList, boot, ensureMeta,
   };
 });

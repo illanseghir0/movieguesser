@@ -79,7 +79,6 @@ async function submit() {
 
       <div class="btnrow" style="margin-top:28px">
         <button class="big" @click="game.goSetup()">Nouvelle séance</button>
-        <button class="linkBtn" @click="game.goHome()">← accueil</button>
         <button class="linkBtn" @click="profile.signOut()">déconnexion</button>
       </div>
     </template>
@@ -124,10 +123,6 @@ async function submit() {
           <template v-else>Déjà membre ? <a @click="mode = 'in'; err = ''">Connecte-toi</a></template>
         </div>
       </form>
-
-      <div class="btnrow" style="margin-top:26px">
-        <button class="linkBtn" @click="game.goHome()">← retour à l'accueil</button>
-      </div>
     </template>
   </section>
 </template>

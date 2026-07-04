@@ -49,7 +49,6 @@ onMounted(() => {
 
 <template>
   <section id="end">
-    <div class="credits-lbl">— Générique de fin —</div>
     <div class="winner" :style="{ color: winner.color }">{{ winner.text }}</div>
 
     <div class="finalScore">
@@ -94,7 +93,6 @@ onMounted(() => {
 
     <div class="btnrow" style="margin-top:28px">
       <button class="big" @click="game.rematch()">Revanche</button>
-      <button class="ghost" @click="game.goHome()">Retour à l'accueil</button>
     </div>
   </section>
 </template>
