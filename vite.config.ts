@@ -3,9 +3,8 @@ import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
   plugins: [vue()],
-  // le site est servi sous /movieguesser/ sur GitHub Pages
-  // (passera à "/" quand le domaine movieguesser sera branché)
-  base: "/movieguesser/",
+  // le site vit à la racine du domaine movieguesser.fr
+  base: "/",
   test: {
     environment: "happy-dom",
     setupFiles: ["tests/setup.ts"],
