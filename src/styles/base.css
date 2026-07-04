@@ -144,8 +144,6 @@ button.big{font-size:13px;padding:17px 40px;
 /* ---- mobile ---- */
 @media (max-width:560px){
   body{padding:20px 12px 40px}
-  .topbar{top:10px;right:12px}
-  .cornerNav{top:10px;left:12px}
   .panel{padding:22px 16px}
   .row2{gap:16px}
   .urlrow{flex-direction:column;align-items:stretch}
@@ -154,16 +152,15 @@ button.big{font-size:13px;padding:17px 40px;
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-/* ---- coins de navigation fixes ---- */
-.topbar{position:fixed;top:18px;right:26px;display:flex;gap:8px;align-items:center;z-index:40}
-.cornerNav{position:fixed;top:18px;left:26px;z-index:40}
-button.mini{padding:7px 13px;font-size:10px;letter-spacing:.14em}
+/* ---- barre de navigation (dans le flux : pas de superposition mobile) ---- */
+.navbar{display:flex;justify-content:space-between;align-items:center;min-height:36px;
+  padding:0 2px 12px;margin-bottom:24px;border-bottom:1px solid var(--line)}
+.navbar .side{display:flex;gap:10px;align-items:center;min-width:0}
 .profileChip{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;
   letter-spacing:.1em;text-transform:uppercase;color:var(--text);cursor:pointer;
-  border:1px solid var(--line);border-radius:99px;padding:6px 13px;
-  background:rgba(10,13,16,.55);backdrop-filter:blur(6px)}
+  border:1px solid var(--line);border-radius:99px;padding:6px 13px;max-width:60vw}
 .profileChip:hover{border-color:rgba(255,255,255,.3)}
-.profileChip .u{color:var(--p1)}
+.profileChip .u{color:var(--p1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ---- modal (connexion / profil) ---- */
 .modal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
