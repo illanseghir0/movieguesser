@@ -145,7 +145,7 @@ function changeEmail() {
         <div class="field">
           <label>Le code</label>
           <input v-model="code" class="otpInput" type="text" inputmode="numeric"
-                 autocomplete="one-time-code" maxlength="6" placeholder="······" spellcheck="false">
+                 autocomplete="one-time-code" maxlength="8" placeholder="········" spellcheck="false">
         </div>
 
         <div v-if="err" class="formErr">{{ err }}</div>
