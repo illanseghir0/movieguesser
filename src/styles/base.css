@@ -116,10 +116,10 @@ button.big{font-size:13px;padding:17px 40px;
 .field{margin-bottom:20px}
 .field label{display:block;font-size:10px;color:var(--muted);margin-bottom:8px;
   letter-spacing:.26em;text-transform:uppercase;font-weight:600}
-.field input[type=text]{width:100%;background:transparent;color:var(--text);
+.field input[type=text],.field input[type=password]{width:100%;background:transparent;color:var(--text);
   border:none;border-bottom:2px solid var(--line);border-radius:0;
   padding:8px 2px 10px;font-size:17px;font-family:var(--body);transition:border-color .2s}
-.field input[type=text]:focus{outline:none;border-bottom-color:var(--text)}
+.field input[type=text]:focus,.field input[type=password]:focus{outline:none;border-bottom-color:var(--text)}
 #n1:focus{border-bottom-color:var(--p1)} #n2:focus{border-bottom-color:var(--p2)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
 
@@ -131,11 +131,12 @@ button.big{font-size:13px;padding:17px 40px;
   transition:color .15s,border-color .15s;user-select:none}
 .seg .s:hover,.rounds .r:hover{color:var(--text)}
 .seg .s.on,.rounds .r.on{color:var(--ink);background:var(--text);border-color:var(--text)}
-.rounds input{width:78px;background:transparent;border:none;border-bottom:2px solid var(--line);
+/* spécificité renforcée : game.css (chargé après) style aussi input[type=number] */
+.rounds input[type=number]{width:78px;background:transparent;border:none;border-bottom:2px solid var(--line);
   color:var(--text);font-family:var(--display);font-size:19px;text-align:center;
   letter-spacing:.08em;padding:7px 4px;border-radius:0;-moz-appearance:textfield;appearance:textfield}
-.rounds input::-webkit-outer-spin-button,.rounds input::-webkit-inner-spin-button{-webkit-appearance:none}
-.rounds input:focus{outline:none;border-bottom-color:var(--text)}
+.rounds input[type=number]::-webkit-outer-spin-button,.rounds input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+.rounds input[type=number]:focus{outline:none;border-bottom-color:var(--text)}
 .modeNote{color:var(--muted);font-size:12px;margin-top:10px;line-height:1.6}
 
 .urlrow{display:flex;gap:12px;align-items:flex-end}
@@ -167,3 +168,22 @@ footer{color:var(--muted);font-size:11px;margin-top:36px;text-align:center;line-
 }
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---- topbar profil (Supabase) ---- */
+.topbar{position:absolute;top:-16px;right:0;display:flex;gap:8px;align-items:center;z-index:5}
+button.mini{padding:7px 13px;font-size:10px;letter-spacing:.14em}
+.profileChip{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--text);
+  border:1px solid var(--line);border-radius:99px;padding:6px 13px}
+.profileChip .u{color:var(--p1)}
+
+/* ---- modal (connexion / profil) ---- */
+.modal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
+  background:rgba(6,8,10,.92);padding:18px;animation:fadeIn .2s ease}
+.modal .panel{width:100%;max-width:420px;animation:pop .3s cubic-bezier(.2,.7,.3,1.15) both}
+.modal .setHead{margin-bottom:18px}
+.formErr{color:var(--true);font-size:12px;margin-top:10px;line-height:1.5;min-height:18px}
+.formOk{color:var(--p1);font-size:12px;margin-top:10px;line-height:1.5}
+.authAlt{text-align:center;margin-top:16px;font-size:12px;color:var(--muted)}
+.authAlt a{cursor:pointer}
+.recordedNote{color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-top:14px}

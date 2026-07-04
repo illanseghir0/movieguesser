@@ -5,3 +5,9 @@ posters/
 # environnement local
 .claude/
 .DS_Store
+
+# build / dépendances
+node_modules/
+dist/
+.env.local
+.env
