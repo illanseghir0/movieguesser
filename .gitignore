@@ -2,8 +2,8 @@
 films_cache.json
 posters/
 
-# environnement local
-.claude/
+# environnement local (les skills et CLAUDE.md sont versionnés)
+.claude/settings.local.json
 .DS_Store
 
 # build / dépendances
