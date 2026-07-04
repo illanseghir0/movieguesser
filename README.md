@@ -55,10 +55,10 @@ public/films.json          Top 500 pré-scrapé (liste par défaut)
 ## Développement
 
 ```bash
-npm install
-npm run dev        # http://localhost:5173
-npm run typecheck  # vue-tsc
-npm run build      # -> dist/
+pnpm install
+pnpm dev        # http://localhost:5173
+pnpm typecheck  # vue-tsc
+pnpm build      # -> dist/
 ```
 
 ## Configurer les profils (Supabase)

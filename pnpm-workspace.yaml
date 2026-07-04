@@ -1,0 +1,4 @@
+# scripts d'installation autorisés (pnpm bloque les postinstall par défaut)
+allowBuilds:
+  esbuild: true
+  vue-demi: true
