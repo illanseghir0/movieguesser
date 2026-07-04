@@ -61,6 +61,7 @@ public/films.json          Top 500 pré-scrapé (liste par défaut)
 pnpm install
 pnpm dev        # http://localhost:5173
 pnpm typecheck  # vue-tsc
+pnpm test       # vitest (logique de jeu, stores, parsing)
 pnpm build      # -> dist/
 ```
 
