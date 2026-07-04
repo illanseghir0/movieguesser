@@ -8,5 +8,7 @@ export default defineConfig({
   test: {
     environment: "happy-dom",
     setupFiles: ["tests/setup.ts"],
+    // jamais de vrai client Supabase dans les tests (même avec un .env.local)
+    env: { VITE_SUPABASE_URL: "", VITE_SUPABASE_ANON_KEY: "" },
   },
 });

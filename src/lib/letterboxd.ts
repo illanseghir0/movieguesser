@@ -7,6 +7,7 @@
    ============================================================ */
 
 import type { Film } from "../types";
+import { reportError } from "./telemetry";
 
 const PROXIES: Array<(u: string) => string> = [
   (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
@@ -26,6 +27,7 @@ export async function fetchHTML(url: string): Promise<string> {
       }
     } catch { /* proxy suivant */ }
   }
+  reportError("proxy_failure", url);
   throw new Error("aucun proxy CORS disponible");
 }
 

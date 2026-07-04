@@ -9,6 +9,7 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { reportError } from "../lib/telemetry";
 import type { Profile } from "../types";
 
 export const useProfileStore = defineStore("profile", () => {
@@ -75,19 +76,15 @@ export const useProfileStore = defineStore("profile", () => {
     await supabase.auth.signOut();
   }
 
-  /** mise à jour des stats en fin de partie (profil = Joueur 1) */
+  /** mise à jour des stats en fin de partie (profil = Joueur 1) —
+      via la RPC record_game, validée côté Postgres (incréments bornés) */
   async function recordGame(won: boolean, bestGap: number | null): Promise<boolean> {
     if (!supabase || !profile.value) return false;
-    const p = profile.value;
-    const next = {
-      games_played: p.games_played + 1,
-      games_won: p.games_won + (won ? 1 : 0),
-      best_gap: bestGap == null ? p.best_gap
-        : p.best_gap == null ? bestGap : Math.min(p.best_gap, bestGap),
-    };
-    const { data, error } = await supabase.from("profiles")
-      .update(next).eq("id", p.id).select().single();
+    const { data, error } = await supabase.rpc("record_game", {
+      p_won: won, p_best_gap: bestGap,
+    });
     if (!error && data) { profile.value = data as Profile; return true; }
+    reportError("record_game", error?.message);
     return false;
   }
 

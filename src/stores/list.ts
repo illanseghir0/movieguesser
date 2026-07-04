@@ -8,6 +8,7 @@ import type { CatalogEntry, Film } from "../types";
 import { fetchHTML, normListUrl, parseFilmPage, parseListPage } from "../lib/letterboxd";
 import { FALLBACK_CATALOG } from "../lib/catalog";
 import { supabase } from "../lib/supabase";
+import { reportError } from "../lib/telemetry";
 
 export type StatusType = "ok" | "err" | "info";
 
@@ -150,7 +151,10 @@ export const useListStore = defineStore("list", () => {
           }));
           return;
         }
-      } catch { /* table absente : on retombe sur le secours */ }
+        if (error) reportError("catalog_db", error.message);
+      } catch (e) {
+        reportError("catalog_db", e instanceof Error ? e.message : "inconnu");
+      }
     }
     catalog.value = FALLBACK_CATALOG;
   }

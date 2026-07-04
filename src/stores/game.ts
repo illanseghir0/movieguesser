@@ -6,13 +6,12 @@
 
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
+import router from "../router";
 import type { Film, RoundResult } from "../types";
 import { REDUCE } from "../lib/env";
 import { useListStore } from "./list";
 import { useSettingsStore } from "./settings";
 import { useProfileStore } from "./profile";
-
-export type Screen = "home" | "setup" | "profile" | "play" | "end";
 
 export interface RevealState {
   stage: 0 | 1 | 2;      // 0: paris posés, 1: vrai rang, 2: verdict
@@ -25,7 +24,6 @@ export const useGameStore = defineStore("game", () => {
   const list = useListStore();
   const settings = useSettingsStore();
 
-  const screen = ref<Screen>("home");
   const names = ref<[string, string]>(["Joueur 1", "Joueur 2"]);
   const score = ref<[number, number]>([0, 0]);
   /** score affiché : ne rattrape score qu'au temps 3 de la révélation (drama) */
@@ -63,7 +61,7 @@ export const useGameStore = defineStore("game", () => {
     for (let i = d.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [d[i], d[j]] = [d[j], d[i]]; }
     deck.value = d;
     playRounds.value = Math.min(settings.rounds, d.length);
-    screen.value = "play";
+    router.push("/jeu");
     nextRound();
   }
 
@@ -139,7 +137,7 @@ export const useGameStore = defineStore("game", () => {
     clearTimers();
     handoffOpen.value = false;
     scoreShown.value = [...score.value] as [number, number];
-    screen.value = "end";
+    router.push("/fin");
     // profil connecté = Joueur 1 : on enregistre ses stats
     const profile = useProfileStore();
     if (profile.profile && history.value.length) {
@@ -151,12 +149,12 @@ export const useGameStore = defineStore("game", () => {
 
   function quit() { endGame(); }
   function rematch() { startGame(); }
-  function goHome() { screen.value = "home"; }
-  function goSetup() { screen.value = "setup"; }
-  function goProfile() { screen.value = "profile"; }
+  function goHome() { router.push("/"); }
+  function goSetup() { router.push("/seance"); }
+  function goProfile() { router.push("/profil"); }
 
   return {
-    screen, names, score, scoreShown, round, playRounds, deck, guesses, phase, order,
+    names, score, scoreShown, round, playRounds, deck, guesses, phase, order,
     handoffOpen, reveal, history, statsRecorded, current, currentPlayer,
     start, nextRound, closeHandoff, submitGuess, quit, rematch, goHome, goSetup, goProfile,
   };

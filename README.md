@@ -31,10 +31,12 @@ le code profils est même exclu du bundle par tree-shaking.
 
 ```
 src/
-  App.vue                  racine : backdrop, navigation entre écrans
+  App.vue                  racine : backdrop, router-view
+  router.ts                routes (/seance, /profil, /jeu, /fin) + guards
   types.ts                 Film, RoundResult, Profile
   lib/
     letterboxd.ts          fonctions pures : proxys CORS, parsing listes/films
+    telemetry.ts           compteurs d'erreurs + report vers error_events
     supabase.ts            client Supabase (null si non configuré)
     env.ts                 prefers-reduced-motion
   stores/                  Pinia
@@ -46,11 +48,14 @@ src/
     TheHeader.vue          titre + chip profil/connexion
     HomeScreen.vue         accueil : liste, joueurs, citation
     SettingsScreen.vue     paramètres + films.json local
-    PlayScreen.vue         scoreboard, affiche, devinette, révélation
+    PlayScreen.vue         scoreboard, affiche, devinette, verdict
+    RevealLine.vue         la ligne de révélation 1 -> N (chorégraphie)
     EndScreen.vue          générique de fin, stats, récap, confetti
     HandoffOverlay.vue     entracte (passage de l'écran)
     AuthModal.vue          connexion / création de profil
 supabase/schema.sql        table profiles + RLS (à exécuter une fois)
+supabase/hardening.sql     RPC record_game + télémétrie (à exécuter une fois)
+supabase/seed_lists.sql    catalogue enrichi, généré par ingest_lists.py
 scrape.py                  scraper Python optionnel -> films.json
 public/films.json          Top 500 pré-scrapé (liste par défaut)
 ```

@@ -5,6 +5,10 @@ import type { Film } from "../src/types";
 // pas de Supabase dans les tests (profil désactivé, stats non enregistrées)
 vi.mock("../src/lib/supabase", () => ({ supabase: null }));
 
+// router mocké : on asserte les navigations poussées par le store
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("../src/router", () => ({ default: { push } }));
+
 import { useGameStore } from "../src/stores/game";
 import { useListStore } from "../src/stores/list";
 import { useSettingsStore } from "../src/stores/settings";
@@ -52,13 +56,14 @@ beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
   vi.useFakeTimers();
+  push.mockClear();
 });
 afterEach(() => { vi.useRealTimers(); });
 
 describe("démarrage et ordre de passage", () => {
   it("démarre une partie propre", () => {
     const game = freshGame();
-    expect(game.screen).toBe("play");
+    expect(push).toHaveBeenCalledWith("/jeu");
     expect(game.round).toBe(1);
     expect(game.score).toEqual([0, 0]);
     expect(game.handoffOpen).toBe(true); // entracte annonce le premier joueur
@@ -68,7 +73,8 @@ describe("démarrage et ordre de passage", () => {
   it("refuse de démarrer sans liste chargée", () => {
     const game = useGameStore();
     game.start("Alice", "Bob");
-    expect(game.screen).toBe("home");
+    expect(push).not.toHaveBeenCalled();
+    expect(game.round).toBe(0);
   });
 
   it("alterne le premier joueur à chaque manche (mode alterné)", () => {
@@ -169,7 +175,7 @@ describe("scoring — mode manches", () => {
     game.nextRound();
     playRound(game, 4, 1);
     game.nextRound();
-    expect(game.screen).toBe("end");
+    expect(push).toHaveBeenCalledWith("/fin");
     expect(game.history).toHaveLength(2);
     expect(game.score).toEqual([1, 1]);      // une manche chacun
   });
@@ -199,7 +205,7 @@ describe("scoring — course aux points", () => {
     const game = freshGame({ mode: "points", target: 25, films: 100 });
     playRound(game, 0, 30);                  // 30 pts >= objectif 25
     game.nextRound();
-    expect(game.screen).toBe("end");
+    expect(push).toHaveBeenCalledWith("/fin");
     expect(game.score[0]).toBeGreaterThanOrEqual(25);
   });
 
@@ -207,7 +213,7 @@ describe("scoring — course aux points", () => {
     const game = freshGame({ mode: "points", target: 1000, films: 100 });
     playRound(game, 0, 10);
     game.nextRound();
-    expect(game.screen).toBe("play");
+    expect(push).not.toHaveBeenCalledWith("/fin");
     expect(game.round).toBe(2);
   });
 });
@@ -216,16 +222,17 @@ describe("fins de partie", () => {
   it("abandon -> générique immédiat", () => {
     const game = freshGame();
     game.quit();
-    expect(game.screen).toBe("end");
+    expect(push).toHaveBeenCalledWith("/fin");
   });
 
   it("revanche : repartie propre avec les mêmes joueurs", () => {
     const game = freshGame({ rounds: 1 });
     playRound(game, 0, 5);
     game.nextRound();
-    expect(game.screen).toBe("end");
+    expect(push).toHaveBeenCalledWith("/fin");
+    push.mockClear();
     game.rematch();
-    expect(game.screen).toBe("play");
+    expect(push).toHaveBeenCalledWith("/jeu");
     expect(game.round).toBe(1);
     expect(game.score).toEqual([0, 0]);
     expect(game.history).toHaveLength(0);

@@ -4,6 +4,7 @@ import { REDUCE } from "../lib/env";
 import { useGameStore } from "../stores/game";
 import { useListStore } from "../stores/list";
 import { useSettingsStore } from "../stores/settings";
+import RevealLine from "./RevealLine.vue";
 
 const game = useGameStore();
 const list = useListStore();
@@ -59,21 +60,6 @@ watch([() => game.handoffOpen, () => game.reveal, () => game.round], async ([h, 
   if (!h && !r) { await nextTick(); guessInput.value?.focus(); }
 }, { immediate: true });
 
-/* ---- révélation : positions sur la ligne 1 -> maxRank ---- */
-const pos = (r: number) => `${((r - 1) / (list.maxRank - 1)) * 100}%`;
-const ticks = computed(() =>
-  [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(1 + (list.maxRank - 1) * f)));
-
-/* les paris glissent depuis la gauche : insérés à left 0, placés au double-rAF */
-const placed = ref(false);
-watch(() => game.reveal, async (r) => {
-  if (!r) { placed.value = false; return; }
-  if (REDUCE) { placed.value = true; return; }
-  placed.value = false;
-  await nextTick();
-  requestAnimationFrame(() => requestAnimationFrame(() => { placed.value = true; }));
-});
-
 const stage = computed(() => game.reveal?.stage ?? -1);
 
 /* compteur animé du vrai rang */
@@ -90,11 +76,6 @@ watch(stage, (st) => {
     displayRank.value = "#" + Math.round(from + (to - from) * e);
     if (p < 1 && game.reveal) requestAnimationFrame(step);
   })(t0);
-});
-
-const markStyle = (g: number, visible: boolean) => ({
-  left: visible ? pos(g) : "0%",
-  opacity: visible ? 1 : 0,
 });
 
 const verdictText = computed(() => {
@@ -191,24 +172,9 @@ function offTilt() { if (zone.value) zone.value.style.transform = ""; }
           <a :href="film.url" target="_blank" rel="noopener">Voir sur Letterboxd ↗</a>
         </div>
 
-        <div class="line-wrap">
-          <div class="axis"><div class="fill" :style="{ width: stage >= 1 ? pos(film.rank) : '0%' }"></div></div>
-          <div class="mark m1" :class="{ won: stage >= 2 && game.reveal.win !== 2 }"
-               :style="markStyle(game.guesses[0]!, placed)">
-            <div class="bub">{{ game.names[0].split(" ")[0] }} · {{ game.guesses[0] }}</div>
-            <div class="pin"></div>
-          </div>
-          <div class="mark m2" :class="{ won: stage >= 2 && game.reveal.win !== 1 }"
-               :style="markStyle(game.guesses[1]!, placed)">
-            <div class="bub">{{ game.names[1].split(" ")[0] }} · {{ game.guesses[1] }}</div>
-            <div class="pin"></div>
-          </div>
-          <div class="mark mt" :style="markStyle(film.rank, stage >= 1)">
-            <div class="bub">#{{ film.rank }}</div>
-            <div class="pin"></div>
-          </div>
-          <div class="ticks"><span v-for="t in ticks" :key="t">{{ t }}</span></div>
-        </div>
+        <RevealLine :names="game.names" :guesses="game.guesses as [number, number]"
+                    :rank="film.rank" :max-rank="list.maxRank"
+                    :stage="stage" :win="game.reveal.win" />
 
         <div class="verdict" :class="stage >= 2 ? ['show', game.reveal.win === 0 ? 'tie' : 'win' + game.reveal.win] : []">
           {{ verdictText }}
