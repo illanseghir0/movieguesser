@@ -1,7 +1,9 @@
-# Guess the Rank
+# MovieGuesser
 
-*A Letterboxd game* — jeu de duel hot-seat pour deux cinéphiles : un film s'affiche,
-chacun devine en secret son rang dans un classement Letterboxd, le plus proche gagne.
+*A Letterboxd game* — jeux de devinettes pour cinéphiles. Premier mode : le duel
+hot-seat « Guess the Rank » — un film s'affiche, chacun devine en secret son rang
+dans un classement Letterboxd, le plus proche gagne. D'autres mini-jeux suivront
+(deviner des titres, des réalisateurs…).
 
 **Jouer :** ouvrir le site, coller l'URL de n'importe quelle liste Letterboxd classée
 (ex. [Top 250 Films with the Most Fans](https://letterboxd.com/official/list/top-250-films-with-the-most-fans/)),

@@ -39,6 +39,6 @@ function homeClick() {
 
   <header class="bar">
     <div class="billing">A Letterboxd Game</div>
-    <h1 @click="homeClick">Guess the Rank</h1>
+    <h1 @click="homeClick">MovieGuesser</h1>
   </header>
 </template>

@@ -12,7 +12,7 @@ let sent = 0;
 
 export function reportError(category: string, detail?: string) {
   errorCounts[category] = (errorCounts[category] ?? 0) + 1;
-  console.warn(`[gtr] ${category}${detail ? ` — ${detail}` : ""} (x${errorCounts[category]})`);
+  console.warn(`[mg] ${category}${detail ? ` — ${detail}` : ""} (x${errorCounts[category]})`);
   if (supabase && sent < 10) {
     sent++;
     supabase.from("error_events").insert({
@@ -20,7 +20,7 @@ export function reportError(category: string, detail?: string) {
       detail: detail?.slice(0, 300) ?? null,
       ua: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 200) : null,
     }).then(
-      ({ error }) => { if (error) console.warn("[gtr] télémétrie indisponible:", error.message); },
+      ({ error }) => { if (error) console.warn("[mg] télémétrie indisponible:", error.message); },
       () => { /* réseau coupé : tant pis */ },
     );
   }
