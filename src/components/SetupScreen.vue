@@ -69,19 +69,26 @@ function carNav(dir: number) {
   tween = (tween ?? posR.value) + dir * cardWidth(); // clics cumulables, pas exact
 }
 
-/* glissement (souris ou doigt) */
+/* glissement (souris ou doigt) — la capture du pointeur n'est prise qu'à
+   partir d'un vrai déplacement (>7px) : la prendre dès l'appui redirige
+   aussi le click vers le conteneur et rendait les cartes incliquables */
+let pressed = false;
 function dragDown(e: PointerEvent) {
-  dragging.value = true; dragMoved = false;
-  dragStartX = e.clientX; dragStartPos = posR.value; tween = null;
-  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  pressed = true; dragMoved = false;
+  dragStartX = e.clientX; dragStartPos = posR.value;
 }
 function dragMove(e: PointerEvent) {
-  if (!dragging.value) return;
+  if (!pressed) return;
   const dx = e.clientX - dragStartX;
-  if (Math.abs(dx) > 6) dragMoved = true;
+  if (!dragging.value) {
+    if (Math.abs(dx) < 7) return;      // simple clic : on ne s'en mêle pas
+    dragging.value = true; tween = null;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+  dragMoved = true;
   posR.value = dragStartPos - dx;
 }
-function dragUp() { dragging.value = false; }
+function dragUp() { pressed = false; dragging.value = false; }
 /* un vrai glissement ne doit pas sélectionner la carte relâchée */
 function cardClick(entry: (typeof list.catalog)[number]) {
   if (dragMoved) { dragMoved = false; return; }
