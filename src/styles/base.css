@@ -266,3 +266,8 @@ button.big{font-size:13px;padding:17px 40px;
 /* ---- règles centrées (écran La séance) ---- */
 .rulesWrap{max-width:680px;margin:0 auto;text-align:center}
 .rulesWrap .seg,.rulesWrap .rounds{justify-content:center}
+
+/* ---- saisie du code de connexion (OTP) ---- */
+.otpInput{font-family:var(--display)!important;font-size:34px!important;text-align:center;
+  letter-spacing:.45em;padding-left:calc(2px + .45em)!important}
+.otpInput::placeholder{letter-spacing:.3em}

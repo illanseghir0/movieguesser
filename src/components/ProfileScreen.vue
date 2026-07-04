@@ -18,24 +18,41 @@ const since = computed(() => {
   return new Date(d).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 });
 
-/* ---- formulaire (connexion / création) ---- */
-const mode = ref<"in" | "up">("in");
+/* ---- connexion par code email (pas de mot de passe) ---- */
+const step = ref<"email" | "code">("email");
 const email = ref("");
-const password = ref("");
 const uname = ref("");
+const code = ref("");
 const err = ref("");
-const info = ref("");
+const cooldown = ref(0);
+let cdTimer: number | undefined;
 
-async function submit() {
-  err.value = ""; info.value = "";
-  if (mode.value === "in") {
-    const e = await profile.signIn(email.value.trim(), password.value);
-    if (e) err.value = e;
-  } else {
-    const r = await profile.signUp(email.value.trim(), password.value, uname.value.trim());
-    if (r?.err) err.value = r.err;
-    else if (r?.info) info.value = r.info;
-  }
+function startCooldown() {
+  cooldown.value = 30;
+  clearInterval(cdTimer);
+  cdTimer = window.setInterval(() => {
+    if (--cooldown.value <= 0) clearInterval(cdTimer);
+  }, 1000);
+}
+
+async function sendCode() {
+  err.value = "";
+  const e = await profile.sendCode(email.value.trim(), uname.value.trim() || undefined);
+  if (e) { err.value = e; return; }
+  step.value = "code";
+  code.value = "";
+  startCooldown();
+}
+
+async function verify() {
+  err.value = "";
+  const e = await profile.verifyCode(email.value.trim(), code.value);
+  if (e) err.value = e;
+  // succès : la session s'ouvre, le template bascule sur la carte de membre
+}
+
+function changeEmail() {
+  step.value = "email"; code.value = ""; err.value = "";
 }
 </script>
 
@@ -85,7 +102,7 @@ async function submit() {
 
     <!-- non connecté : rejoindre le club -->
     <template v-else>
-      <div class="setHead">{{ mode === "in" ? "Le club" : "Rejoindre le club" }}</div>
+      <div class="setHead">Le club</div>
       <div class="clubIntro">
         Un profil garde la trace de tes séances, tes victoires
         et ton estimation la plus fine — de générique en générique.
@@ -95,32 +112,53 @@ async function submit() {
         Les profils ne sont pas disponibles sur cette version du site.
       </div>
 
-      <form v-else style="max-width:400px;margin:0 auto" @submit.prevent="submit">
-        <div v-if="mode === 'up'" class="field">
-          <label>Pseudo</label>
-          <input v-model="uname" type="text" maxlength="20" autocomplete="username" spellcheck="false">
-        </div>
+      <!-- étape 1 : email (+ pseudo pour une première fois) -->
+      <form v-if="profile.enabled && step === 'email'" style="max-width:400px;margin:0 auto"
+            @submit.prevent="sendCode">
         <div class="field">
           <label>Email</label>
-          <input v-model="email" type="text" inputmode="email" autocomplete="email" spellcheck="false">
+          <input v-model="email" type="text" inputmode="email" autocomplete="email"
+                 spellcheck="false" placeholder="ton@email.fr">
         </div>
         <div class="field">
-          <label>Mot de passe</label>
-          <input v-model="password" type="password"
-                 :autocomplete="mode === 'in' ? 'current-password' : 'new-password'">
+          <label>Pseudo <span style="text-transform:none;letter-spacing:.05em">(si première séance)</span></label>
+          <input v-model="uname" type="text" maxlength="20" autocomplete="username"
+                 spellcheck="false" placeholder="optionnel">
         </div>
 
         <div v-if="err" class="formErr">{{ err }}</div>
-        <div v-if="info" class="formOk">{{ info }}</div>
 
         <div class="btnrow" style="margin-top:22px">
-          <button class="big" type="submit" :disabled="profile.busy">
-            {{ mode === "in" ? "Se connecter" : "Créer le profil" }}
+          <button class="big" type="submit" :disabled="profile.busy || !email.trim()">
+            Recevoir le code
+          </button>
+        </div>
+        <div class="authAlt">Un code à usage unique arrive par email — pas de mot de passe à retenir.</div>
+      </form>
+
+      <!-- étape 2 : le code à 6 chiffres -->
+      <form v-else-if="profile.enabled" style="max-width:400px;margin:0 auto"
+            @submit.prevent="verify">
+        <div class="formOk" style="text-align:center;margin-bottom:18px">
+          Code envoyé à {{ email }} — vérifie ta boîte mail.
+        </div>
+        <div class="field">
+          <label>Le code</label>
+          <input v-model="code" class="otpInput" type="text" inputmode="numeric"
+                 autocomplete="one-time-code" maxlength="6" placeholder="······" spellcheck="false">
+        </div>
+
+        <div v-if="err" class="formErr">{{ err }}</div>
+
+        <div class="btnrow" style="margin-top:22px">
+          <button class="big" type="submit" :disabled="profile.busy || code.trim().length < 6">
+            Entrer dans le club
           </button>
         </div>
         <div class="authAlt">
-          <template v-if="mode === 'in'">Pas encore membre ? <a @click="mode = 'up'; err = ''">Rejoins le club</a></template>
-          <template v-else>Déjà membre ? <a @click="mode = 'in'; err = ''">Connecte-toi</a></template>
+          <a v-if="cooldown <= 0" @click="sendCode">Renvoyer un code</a>
+          <template v-else>Renvoyer un code ({{ cooldown }} s)</template>
+          &nbsp;·&nbsp;<a @click="changeEmail">changer d'email</a>
         </div>
       </form>
     </template>

@@ -46,27 +46,34 @@ export const useProfileStore = defineStore("profile", () => {
     if (!error && created) profile.value = created as Profile;
   }
 
-  /** renvoie un message d'erreur, un message d'info (confirmation email), ou null si ok */
-  async function signUp(email: string, password: string, uname: string):
-    Promise<{ err?: string; info?: string } | null> {
-    if (!supabase) return { err: "Supabase non configuré" };
-    if (!/^[\w.-]{3,20}$/.test(uname)) return { err: "Pseudo : 3 à 20 caractères (lettres, chiffres, . _ -)" };
+  /** envoie un code de connexion à 6 chiffres par email
+      (crée le compte au premier passage ; pseudo optionnel) */
+  async function sendCode(email: string, uname?: string): Promise<string | null> {
+    if (!supabase) return "Profils indisponibles sur cette version";
+    if (uname && !/^[\w.-]{3,20}$/.test(uname)) {
+      return "Pseudo : 3 à 20 caractères (lettres, chiffres, . _ -)";
+    }
     busy.value = true;
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email, password, options: { data: { username: uname } },
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          data: uname ? { username: uname } : undefined,
+        },
       });
-      if (error) return { err: traduireErreur(error.message) };
-      if (!data.session) return { info: "Compte créé — clique sur le lien reçu par email pour activer ton profil." };
-      return null;
+      return error ? traduireErreur(error.message) : null;
     } finally { busy.value = false; }
   }
 
-  async function signIn(email: string, password: string): Promise<string | null> {
-    if (!supabase) return "Supabase non configuré";
+  /** vérifie le code reçu : succès = session ouverte (profil créé au besoin) */
+  async function verifyCode(email: string, token: string): Promise<string | null> {
+    if (!supabase) return "Profils indisponibles sur cette version";
     busy.value = true;
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.verifyOtp({
+        email, token: token.trim(), type: "email",
+      });
       return error ? traduireErreur(error.message) : null;
     } finally { busy.value = false; }
   }
@@ -89,16 +96,14 @@ export const useProfileStore = defineStore("profile", () => {
   }
 
   function traduireErreur(msg: string): string {
-    if (/invalid login credentials/i.test(msg)) return "Email ou mot de passe incorrect";
-    if (/already registered/i.test(msg)) return "Un compte existe déjà avec cet email";
-    if (/at least 6 characters/i.test(msg)) return "Mot de passe : 6 caractères minimum";
+    if (/expired|invalid/i.test(msg)) return "Code invalide ou expiré — redemande un code";
     if (/valid email/i.test(msg)) return "Adresse email invalide";
-    if (/rate limit/i.test(msg)) return "Trop de tentatives — réessaie dans un instant";
+    if (/only request this once|rate limit/i.test(msg)) return "Patiente un peu avant de redemander un code";
     return msg;
   }
 
   return {
     enabled, session, profile, username, busy,
-    init, signUp, signIn, signOut, recordGame,
+    init, sendCode, verifyCode, signOut, recordGame,
   };
 });
