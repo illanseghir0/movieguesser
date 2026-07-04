@@ -258,11 +258,12 @@ button.big{font-size:13px;padding:17px 40px;
 
 /* ---- carrousel de classements (auto-défilement JS + flèches) ---- */
 .carWrap{position:relative}
-.carousel{overflow-x:auto;scrollbar-width:none;
+.carousel{overflow:hidden;touch-action:pan-y;cursor:grab;user-select:none;
   mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
   -webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
-.carousel::-webkit-scrollbar{display:none}
-.ctrack{display:flex;width:max-content}
+.carousel.grabbing{cursor:grabbing}
+.carousel img{-webkit-user-drag:none;user-select:none}
+.ctrack{display:flex;width:max-content;will-change:transform}
 .cnav{position:absolute;top:50%;transform:translateY(-50%);z-index:6;
   width:42px;height:42px;border-radius:50%;padding:0;
   background:rgba(10,13,16,.72);border:1px solid var(--line);color:var(--cream);

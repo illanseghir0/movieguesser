@@ -52,7 +52,8 @@ filets fins, menu-sommaire, boutons et cartes « ticket » crantés, grain de pe
 **Palette : monochrome crème/blanc** (`--cream:#f2ead6`, muted `#8b9aa7`) — les couleurs
 « Letterboxd » (vert `--p1`, bleu `--p2`, orange `--true`) ne sont PLUS décoratives :
 elles subsistent uniquement comme marqueurs fonctionnels PENDANT la partie (scoreboard,
-marqueurs de la ligne, verdict, états d'erreur). Accueil, séance, profil et générique
+marqueurs de la ligne, verdict, états d'erreur) — plus une exception festive validée :
+les confettis du générique de fin. Accueil, séance, profil et générique
 de fin sont neutres. Copy en français, ton cinéphile (Séance, Entracte, Générique,
 Carte de membre, Le club, Admit One). Respecter `prefers-reduced-motion` (`REDUCE`).
 

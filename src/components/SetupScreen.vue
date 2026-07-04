@@ -17,47 +17,47 @@ onMounted(() => list.loadCatalog());
 const loop = computed(() =>
   list.catalog.length ? [...list.catalog, ...list.catalog] : []);
 
-/* Position pilotée entièrement en JS (jamais de scroll natif "smooth" qui
-   se battrait avec l'auto-défilement). Survol = ralenti, pas d'arrêt.
-   Flèches = décalage d'exactement une carte (mesurée dans le DOM),
-   cumulable à tout moment via une cible tweenée. */
-const car = ref<HTMLElement | null>(null);
+/* Le rail est déplacé par transform, position possédée à 100 % en JS :
+   pas de scrollLeft (que le navigateur clampe à 0 — c'était le bug du
+   bouton gauche), pas de scroll natif concurrent. Survol = ralenti.
+   Flèches = exactement une carte, cumulables. Glissement au doigt géré
+   par pointer events. */
+const track = ref<HTMLElement | null>(null);
+const posR = ref(0);               // position du rail (px, sans limite)
 let rafId = 0;
-let pos = 0;                       // position de défilement (float)
 let tween: number | null = null;   // cible des flèches
 const hovering = ref(false);
-const touching = ref(false);
+const dragging = ref(false);
+let dragStartX = 0, dragStartPos = 0, dragMoved = false;
 const SPEED = 0.5, SPEED_HOVER = 0.12;
 
+const trackStyle = computed(() => ({ transform: `translate3d(${-posR.value}px,0,0)` }));
+
 function cardWidth(): number {
-  const c = car.value?.querySelector<HTMLElement>(".lcard");
+  const c = track.value?.querySelector<HTMLElement>(".lcard");
   return c ? c.offsetWidth + parseFloat(getComputedStyle(c).marginRight || "0") : 338;
 }
 
 function carTick() {
-  const el = car.value;
-  if (el) {
-    if (touching.value) {
-      pos = el.scrollLeft; // l'utilisateur fait défiler au doigt : on suit
-    } else {
-      let moved = false;
-      if (tween !== null) {
-        const d = tween - pos;
-        pos += d * 0.16;
-        if (Math.abs(d) < 0.8) { pos = tween; tween = null; }
-        moved = true;
-      } else if (!REDUCE) {
-        pos += hovering.value ? SPEED_HOVER : SPEED;
-        moved = true;
-      }
-      if (moved) {
-        const half = el.scrollWidth / 2;
-        if (half > 0) {
-          if (pos >= half) { pos -= half; if (tween !== null) tween -= half; }
-          if (pos < 0) { pos += half; if (tween !== null) tween += half; }
-        }
-        el.scrollLeft = pos;
-      }
+  if (!dragging.value) {
+    if (tween !== null) {
+      const d = tween - posR.value;
+      posR.value += d * 0.16;
+      if (Math.abs(d) < 0.8) { posR.value = tween; tween = null; }
+    } else if (!REDUCE) {
+      posR.value += hovering.value ? SPEED_HOVER : SPEED;
+    }
+  }
+  // boucle sans couture : deux copies, on replie modulo une copie
+  const w = (track.value?.scrollWidth ?? 0) / 2;
+  if (w > 0) {
+    let shift = 0;
+    if (posR.value >= w) shift = -w;
+    else if (posR.value < 0) shift = w;
+    if (shift) {
+      posR.value += shift;
+      if (tween !== null) tween += shift;
+      dragStartPos += shift;
     }
   }
   rafId = requestAnimationFrame(carTick);
@@ -66,7 +66,26 @@ onMounted(() => { rafId = requestAnimationFrame(carTick); });
 onUnmounted(() => cancelAnimationFrame(rafId));
 
 function carNav(dir: number) {
-  tween = (tween ?? pos) + dir * cardWidth(); // clics cumulables, pas exact
+  tween = (tween ?? posR.value) + dir * cardWidth(); // clics cumulables, pas exact
+}
+
+/* glissement (souris ou doigt) */
+function dragDown(e: PointerEvent) {
+  dragging.value = true; dragMoved = false;
+  dragStartX = e.clientX; dragStartPos = posR.value; tween = null;
+  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+}
+function dragMove(e: PointerEvent) {
+  if (!dragging.value) return;
+  const dx = e.clientX - dragStartX;
+  if (Math.abs(dx) > 6) dragMoved = true;
+  posR.value = dragStartPos - dx;
+}
+function dragUp() { dragging.value = false; }
+/* un vrai glissement ne doit pas sélectionner la carte relâchée */
+function cardClick(entry: (typeof list.catalog)[number]) {
+  if (dragMoved) { dragMoved = false; return; }
+  list.selectList(entry);
 }
 
 /* ---- joueurs : pas de noms préremplis, validation au lancement ---- */
@@ -118,13 +137,14 @@ function setTimer(e: Event) {
     <div class="field" style="margin-bottom:0">
       <div class="carWrap">
         <button class="cnav prev" type="button" aria-label="Classements précédents" @click="carNav(-1)">‹</button>
-        <div ref="car" class="carousel"
+        <div class="carousel" :class="{ grabbing: dragging }"
              @pointerenter="hovering = true" @pointerleave="hovering = false"
-             @touchstart="touching = true" @touchend="touching = false" @touchcancel="touching = false">
-          <div class="ctrack">
+             @pointerdown="dragDown" @pointermove="dragMove"
+             @pointerup="dragUp" @pointercancel="dragUp">
+          <div ref="track" class="ctrack" :style="trackStyle">
             <div v-for="(e, i) in loop" :key="i" class="lcard"
                  :class="{ sel: e.slug === list.selectedSlug }" role="button" tabindex="0"
-                 @click="list.selectList(e)" @keydown.enter="list.selectList(e)">
+                 @click="cardClick(e)" @keydown.enter="list.selectList(e)">
               <img v-if="e.cover" :src="e.cover" alt="" loading="lazy">
               <div class="lgrad"></div>
               <div class="linfo">

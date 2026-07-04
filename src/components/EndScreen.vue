@@ -33,7 +33,7 @@ onMounted(() => {
   if (!game.history.length || game.score[0] === game.score[1] || REDUCE) return;
   const box = document.createElement("div");
   box.className = "confetti";
-  const colors = ["#f2ead6", "#e8eef3", "#b9ae97", "#8b9aa7"];
+  const colors = ["#00e054", "#40bcf4", "#ff8000", "#e8eef3"]; // exception festive à la palette neutre
   for (let i = 0; i < 70; i++) {
     const s = document.createElement("i");
     s.style.left = Math.random() * 100 + "%";
