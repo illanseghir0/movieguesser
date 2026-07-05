@@ -259,9 +259,11 @@ button.big{font-size:13px;padding:17px 40px;
 
 @media (max-width:560px){
   .acts{grid-template-columns:1fr;gap:20px}
-  .mstats{grid-template-columns:1fr 1fr}
-  .mstats .ms{border-bottom:1px solid var(--line)}
+  /* stats en 2×2 (en flex les 4 cases s'écrasaient sur une ligne) */
+  .mstats{display:grid;grid-template-columns:1fr 1fr}
+  .mstats .ms{max-width:none;border-bottom:1px solid var(--line)}
   .mstats .ms:nth-child(even){border-right:none}
+  .mstats .ms:nth-child(odd){border-left:1px solid var(--line)}
   .mstats .ms:nth-child(n+3){border-bottom:none}
 }
 
@@ -335,6 +337,29 @@ button.xl{font-size:16px;padding:22px 64px;letter-spacing:.22em}
 .allHead{display:flex;justify-content:space-between;align-items:center;gap:18px;
   margin-bottom:24px}
 
+/* ============================================================
+   mobile : aération et hiérarchie des titres (desktop inchangé)
+   ============================================================ */
+@media (max-width:560px){
+  /* titres : mêmes proportions que le desktop, pas de tailles figées géantes */
+  .setHead{font-size:22px}
+  .actLbl{font-size:15px;margin:40px 0 18px}
+  .menuRow{padding:26px 6px}
+  /* la séance : joueurs empilés, plus d'air autour du lancement */
+  .row2{grid-template-columns:1fr;gap:24px}
+  .launchRow{margin:40px 0 64px}
+  /* carte de membre : avatar et chiffres à l'échelle du petit écran */
+  .member .mhead{padding:28px 20px;gap:20px}
+  .member .ppBig{width:72px;height:72px;font-size:34px}
+  .member .uname{font-size:clamp(32px,10vw,44px)}
+  .member .stub{padding:14px 12px}
+  .mstats{margin-top:26px}
+  .mstats .n{font-size:36px}
+  .mstats .ms{padding:20px 8px 16px}
+  /* footer : grand espace conservé mais proportionné */
+  .siteFoot{padding-top:64px}
+}
+
 /* ---- règles repliées : résumé + personnaliser ---- */
 .ruleSummary{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;
   margin-bottom:6px}
@@ -343,8 +368,13 @@ button.xl{font-size:16px;padding:22px 64px;letter-spacing:.22em}
 
 .modal .panel.rulesPanel{max-width:600px;max-height:88vh;overflow-y:auto}
 
-/* ---- footer de site (aération + mentions) ---- */
-.siteFoot{margin-top:auto;padding:26px 2px 4px;border-top:1px solid var(--line)}
+/* ---- footer de site (aération + mentions) ----
+   le filet est dessiné par ::before : le padding-top garantit un grand
+   espace au-dessus même sur les pages longues (margin-top:auto ne
+   s'applique que s'il reste de la place) */
+.siteFoot{margin-top:auto;padding:96px 2px 4px}
+.siteFoot::before{content:"";display:block;height:1px;background:var(--line);
+  margin-bottom:26px}
 .siteFoot .fRow{display:flex;justify-content:space-between;align-items:baseline;
   gap:14px 28px;flex-wrap:wrap}
 .siteFoot .fBrand{font-family:var(--display);font-size:22px;letter-spacing:.08em;

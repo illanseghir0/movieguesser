@@ -132,10 +132,6 @@ function setTargetCustom(e: Event) {
 }
 function timerOn() { if (!settings.timer) settings.timer = 10; }
 const showAll = ref(false);   // modale « voir tout » des classements
-function pickFromAll(entry: (typeof list.catalog)[number]) {
-  list.selectList(entry);
-  showAll.value = false;
-}
 const showRules = ref(false); // règles repliées derrière « Personnaliser »
 const ruleSummary = computed(() => {
   const m = settings.mode === "rounds"
@@ -197,7 +193,7 @@ function setTimer(e: Event) {
         <div class="lgrid">
           <div v-for="e in list.catalog" :key="e.slug" class="lcard"
                :class="{ sel: e.slug === list.selectedSlug }" role="button" tabindex="0"
-               @click="pickFromAll(e)" @keydown.enter="pickFromAll(e)">
+               @click="list.selectList(e)" @keydown.enter="list.selectList(e)">
             <img v-if="e.cover" :src="e.cover" alt="" loading="lazy">
             <div class="lgrad"></div>
             <div class="linfo">
