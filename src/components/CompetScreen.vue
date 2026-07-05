@@ -34,7 +34,8 @@ const endsLbl = computed(() => {
 const ruleLine = computed(() => {
   const c = compet.challenge;
   if (!c) return "";
-  return `${c.rounds} manches · ${c.timer_seconds} s par réponse · barème (500 − écart) / 10`;
+  const n = listEntry.value?.count;
+  return `${c.rounds} manches · ${c.timer_seconds} s par réponse · barème (${n ?? "films de la liste"} − écart) / 10`;
 });
 
 async function participer() {

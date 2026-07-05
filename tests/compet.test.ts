@@ -44,17 +44,23 @@ beforeEach(() => {
 });
 afterEach(() => { vi.useRealTimers(); });
 
-describe("barème compétitif — (500 - écart)/10, entier supérieur", () => {
-  it("suit la formule aux points remarquables", () => {
-    expect(competPoints(0)).toBe(50);    // rang exact
-    expect(competPoints(10)).toBe(49);
-    expect(competPoints(123)).toBe(38);  // ceil(37.7)
-    expect(competPoints(499)).toBe(1);   // ceil(0.1)
-    expect(competPoints(500)).toBe(0);
+describe("barème compétitif — (taille de la liste - écart)/10, entier supérieur", () => {
+  it("suit la formule aux points remarquables (liste de 250)", () => {
+    expect(competPoints(0, 250)).toBe(25);    // rang exact
+    expect(competPoints(10, 250)).toBe(24);
+    expect(competPoints(123, 250)).toBe(13);  // ceil(12.7)
+    expect(competPoints(249, 250)).toBe(1);   // ceil(0.1)
+    expect(competPoints(250, 250)).toBe(0);
+  });
+
+  it("se normalise sur la taille de la liste", () => {
+    expect(competPoints(0, 500)).toBe(50);    // grande liste : plafond plus haut
+    expect(competPoints(0, 25)).toBe(3);      // petite liste : barème serré
+    expect(competPoints(20, 25)).toBe(1);
   });
 
   it("ne descend jamais sous zéro", () => {
-    expect(competPoints(600)).toBe(0);
+    expect(competPoints(600, 250)).toBe(0);
   });
 });
 
@@ -69,20 +75,20 @@ describe("boucle solo du défi", () => {
   });
 
   it("une seule devinette déclenche la révélation et marque le barème", () => {
-    const game = freshCompet();
-    playRound(game, 20);                       // écart 20 -> 48 pts
-    expect(game.score[0]).toBe(48);
-    expect(game.history[0]).toMatchObject({ win: 1, pts: 48, d: [20, 20] });
+    const game = freshCompet();                // liste de 250 films
+    playRound(game, 20);                       // écart 20 -> ceil(230/10) = 23 pts
+    expect(game.score[0]).toBe(23);
+    expect(game.history[0]).toMatchObject({ win: 1, pts: 23, d: [20, 20] });
     expect(game.phase).toBe(0);                // jamais de second joueur
   });
 
   it("n'affiche le score qu'au verdict (temps 3)", () => {
     const game = freshCompet();
-    game.submitGuess(game.current!.rank);      // exact : +50
-    expect(game.score[0]).toBe(50);
+    game.submitGuess(game.current!.rank);      // exact sur 250 films : +25
+    expect(game.score[0]).toBe(25);
     expect(game.scoreShown[0]).toBe(0);
     vi.advanceTimersByTime(2500);
-    expect(game.scoreShown[0]).toBe(50);
+    expect(game.scoreShown[0]).toBe(25);
   });
 
   it("ignore les réglages locaux : le défi fixe le nombre de manches", () => {

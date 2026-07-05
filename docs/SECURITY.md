@@ -34,7 +34,8 @@ client, pas de backend applicatif à compromettre.
   - `submit_challenge_score` anonyme → `permission denied` (execute réservé à
     `authenticated`)
   - côté fonction : session exigée, fenêtre temporelle vérifiée, score borné à
-    `rounds × 50`, une seule participation (PK + unique_violation).
+    `rounds × ceil(film_count/10)` (taille réelle de la liste du défi),
+    une seule participation (PK + unique_violation).
 
 ### ⚠️ Accepté / à surveiller
 - **Dépendances de dev** : 4 vulnérabilités résiduelles (vite/esbuild), toutes limitées
@@ -55,7 +56,7 @@ client, pas de backend applicatif à compromettre.
 - **error_events** : insertion ouverte à l'anonyme (plafonnée à 10/session côté client
   seulement). Un acteur malveillant peut spammer la table. Impact = bruit/coût, pas de
   fuite. Ajouter un rate-limit Postgres si ça devient un problème.
-- **Score compétitif calculé côté client** : la RPC borne (0 à rounds × 50) mais ne
+- **Score compétitif calculé côté client** : la RPC borne (0 à rounds × ceil(films/10)) mais ne
   prouve pas le score — un joueur authentifié et motivé peut soumettre 500 via la
   console. Compromis assumé d'un site statique sans serveur de partie. Mitigations
   possibles le jour où le classement compte : envoyer le détail des manches

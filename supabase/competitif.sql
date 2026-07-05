@@ -46,6 +46,8 @@ language plpgsql security definer set search_path = public
 as $$
 declare
   ch public.challenges;
+  n_films integer;
+  max_score integer;
   result public.challenge_scores;
 begin
   if auth.uid() is null then
@@ -58,8 +60,11 @@ begin
   if now() < ch.starts_at or now() > ch.ends_at then
     raise exception 'défi clos';
   end if;
-  -- barème (500 - écart)/10 arrondi au-dessus : au plus 50 points par manche
-  if p_score < 0 or p_score > ch.rounds * 50 then
+  -- barème (taille de la liste - écart)/10 arrondi au-dessus :
+  -- au plus ceil(films/10) points par manche
+  select film_count into n_films from public.lists where slug = ch.list_slug;
+  max_score := ch.rounds * ceil(coalesce(n_films, 500) / 10.0)::integer;
+  if p_score < 0 or p_score > max_score then
     raise exception 'score hors bornes';
   end if;
   if p_best_gap is not null and (p_best_gap < 0 or p_best_gap > 10000) then

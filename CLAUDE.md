@@ -44,7 +44,8 @@ supabase/*.sql        schema, hardening (RPC + policies), seed_lists (généré)
   (secret des devinettes). Ancienne option « Toujours J1 » supprimée, migrée vers alterné.
 - **Mode compétitif** : solo, règles fixées par l'équipe dans la table `challenges`
   (liste, manches, chrono) — jamais modifiables par le joueur. Barème par manche :
-  `ceil((500 - écart)/10)` (helper `competPoints`). Une seule participation par joueur
+  `ceil((taille de la liste - écart)/10)` (helper `competPoints`, normalisé pour que
+  petites et grandes listes restent comparables). Une seule participation par joueur
   et par défi, appliquée par la RPC `submit_challenge_score` (security definer, bornes,
   fenêtre temporelle) ; l'abandon ne consomme pas la participation. Jouable sans compte
   mais hors classement. SQL : `supabase/competitif.sql` (idempotent ; relancer son

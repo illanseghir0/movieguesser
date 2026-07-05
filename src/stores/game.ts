@@ -18,9 +18,11 @@ import { useCompetStore } from "./compet";
 
 export type GameKind = "local" | "compet";
 
-/** barème compétitif : partie entière supérieure de (500 - écart) / 10 */
-export function competPoints(gap: number): number {
-  return Math.max(0, Math.ceil((500 - gap) / 10));
+/** barème compétitif : partie entière supérieure de (taille de la liste - écart) / 10
+    — normalisé sur la liste du défi pour que les scores restent comparables
+    (une liste de 250 films plafonne à 25 pts la manche, pas 50) */
+export function competPoints(gap: number, listSize: number): number {
+  return Math.max(0, Math.ceil((listSize - gap) / 10));
 }
 
 export interface RevealState {
@@ -148,7 +150,7 @@ export const useGameStore = defineStore("game", () => {
     const f = current.value!;
     const g = guesses.value[0]!;
     const gap = Math.abs(g - f.rank);
-    const pts = competPoints(gap);
+    const pts = competPoints(gap, list.films?.length ?? list.maxRank);
     score.value[0] += pts;
     history.value.push({ title: f.title, year: f.year, rank: f.rank, g: [g, g], d: [gap, gap], win: 1, pts });
 
