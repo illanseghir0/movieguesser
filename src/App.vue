@@ -36,7 +36,8 @@ onMounted(() => {
   <div class="wrap">
     <TheHeader />
     <router-view />
-    <TheFooter />
+    <!-- pas de footer en pleine partie (immersion) -->
+    <TheFooter v-if="route.name !== 'jeu'" />
   </div>
 
   <HandoffOverlay v-if="game.handoffOpen" />
