@@ -53,6 +53,31 @@ export interface DbScoreRow {
   profiles: { username: string } | null;
 }
 
+/* ---- système d'amis (table `friendships`) ---- */
+
+export type FriendStatus = "pending" | "accepted";
+
+/** un lien d'amitié vu depuis mon profil */
+export interface Friend {
+  /** l'autre joueur */
+  id: string;
+  username: string;
+  status: FriendStatus;
+  /** true = c'est moi qui ai envoyé la demande */
+  outgoing: boolean;
+  since: string;
+}
+
+/** ligne friendships avec les deux profils embarqués (FK nommées) */
+export interface DbFriendshipRow {
+  requester: string;
+  addressee: string;
+  status: FriendStatus;
+  created_at: string;
+  requester_profile: { username: string } | null;
+  addressee_profile: { username: string } | null;
+}
+
 /** défi compétitif fixé par l'équipe (table `challenges`) */
 export interface Challenge {
   id: number;

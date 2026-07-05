@@ -1,8 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { supabase } from "../lib/supabase";
 import { useProfileStore } from "../stores/profile";
+import { useFriendsStore } from "../stores/friends";
+import type { Profile } from "../types";
 
 const profile = useProfileStore();
+const friends = useFriendsStore();
+
+onMounted(() => { if (profile.profile) friends.load(); });
 
 /* ---- stats de la carte de membre ---- */
 const winRate = computed(() => {
@@ -52,6 +58,37 @@ async function verify() {
 function changeEmail() {
   step.value = "email"; code.value = ""; err.value = "";
 }
+
+/* ---- mes amis : ajout par pseudo, réponses, profil consultable ---- */
+const fUname = ref("");
+const fMsg = ref("");
+const fOk = ref(false);
+
+async function addFriend() {
+  if (!fUname.value.trim()) return;
+  fMsg.value = "";
+  const e = await friends.add(fUname.value);
+  fOk.value = !e;
+  fMsg.value = e ?? "Invitation envoyée — elle attend sa réponse";
+  if (!e) fUname.value = "";
+}
+
+/* profil d'un ami en modale (profiles est en lecture publique) */
+const viewed = ref<Profile | null>(null);
+const viewedRate = computed(() => {
+  const p = viewed.value;
+  if (!p || !p.games_played) return "—";
+  return Math.round((p.games_won / p.games_played) * 100) + " %";
+});
+async function viewProfile(id: string) {
+  if (!supabase) return;
+  const { data } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
+  if (data) viewed.value = data as Profile;
+}
+function fmtSince(iso: string | undefined) {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+}
 </script>
 
 <template>
@@ -95,6 +132,86 @@ function changeEmail() {
       <div class="clubIntro" style="margin-top:30px;margin-bottom:0">
         Tes statistiques s'écrivent à chaque générique de fin.
       </div>
+
+      <!-- ---- mes amis ---- -->
+      <div class="actLbl">Mes amis</div>
+
+      <div class="friendAdd">
+        <input v-model="fUname" type="text" maxlength="20"
+               placeholder="pseudo movieguesser" @keydown.enter="addFriend">
+        <button class="ghost" :disabled="friends.busy || !fUname.trim()" @click="addFriend">
+          Envoyer l'invitation
+        </button>
+      </div>
+      <div v-if="fMsg" :class="fOk ? 'formOk' : 'formErr'" style="text-align:center">{{ fMsg }}</div>
+
+      <!-- demandes reçues -->
+      <template v-if="friends.incoming.length">
+        <div class="fSub">Demandes reçues</div>
+        <div class="ladder">
+          <div v-for="f in friends.incoming" :key="f.id" class="lrow">
+            <span class="fdot"></span>
+            <span class="who">{{ f.username }}</span>
+            <span class="frowBtns">
+              <button class="ghost sm" :disabled="friends.busy" @click="friends.respond(f.id, true)">Accepter</button>
+              <button class="linkBtn" :disabled="friends.busy" @click="friends.respond(f.id, false)">refuser</button>
+            </span>
+          </div>
+        </div>
+      </template>
+
+      <!-- la liste -->
+      <p v-if="!friends.friends.length && !friends.incoming.length" class="clubIntro"
+         style="margin-top:18px;font-size:14px">
+        Le club est meilleur accompagné — invite un premier cinéphile par son pseudo.
+      </p>
+      <div v-else-if="friends.friends.length" class="ladder" style="margin-top:14px">
+        <div v-for="f in friends.friends" :key="f.id" class="lrow">
+          <span class="fdot" :class="{ on: friends.isOnline(f.id) }"
+                :title="friends.isOnline(f.id) ? 'en ligne' : 'hors ligne'"></span>
+          <span class="who fLink" role="button" tabindex="0"
+                @click="viewProfile(f.id)" @keydown.enter="viewProfile(f.id)">{{ f.username }}</span>
+          <span class="frowBtns">
+            <button class="linkBtn" :disabled="friends.busy" @click="friends.remove(f.id)">retirer</button>
+          </span>
+        </div>
+      </div>
+
+      <!-- demandes envoyées -->
+      <template v-if="friends.outgoing.length">
+        <div class="fSub">Invitations envoyées</div>
+        <div class="ladder">
+          <div v-for="f in friends.outgoing" :key="f.id" class="lrow">
+            <span class="fdot"></span>
+            <span class="who">{{ f.username }}</span>
+            <span class="when">en attente</span>
+            <span class="frowBtns">
+              <button class="linkBtn" :disabled="friends.busy" @click="friends.remove(f.id)">annuler</button>
+            </span>
+          </div>
+        </div>
+      </template>
+
+      <!-- profil d'un ami -->
+      <Teleport to="body">
+        <div v-if="viewed" class="modal" @click.self="viewed = null">
+          <div class="panel">
+            <div class="setHead" style="margin-bottom:6px">{{ viewed.username }}</div>
+            <p v-if="fmtSince(viewed.created_at)" class="clubIntro" style="margin-bottom:20px;font-size:13px">
+              membre depuis {{ fmtSince(viewed.created_at) }}
+            </p>
+            <div class="fStats">
+              <div class="fs"><b>{{ viewed.games_played }}</b><span>Séances</span></div>
+              <div class="fs"><b>{{ viewed.games_won }}</b><span>Victoires</span></div>
+              <div class="fs"><b>{{ viewedRate }}</b><span>Taux</span></div>
+              <div class="fs"><b>{{ viewed.best_gap ?? "—" }}</b><span>Meilleur écart</span></div>
+            </div>
+            <div class="btnrow" style="margin-top:24px">
+              <button class="ghost" @click="viewed = null">Fermer</button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
     </template>
 
     <!-- non connecté : rejoindre le club -->

@@ -60,6 +60,13 @@ supabase/*.sql        schema, hardening (RPC + policies), seed_lists (généré)
   fenêtre temporelle) ; l'abandon ne consomme pas la participation. Jouable sans compte
   mais hors classement. SQL : `supabase/competitif.sql` (idempotent ; relancer son
   dernier bloc pour créer les défis suivants).
+- **Mode en ligne « entre amis » (chantier en cours, décisions validées)** : duel strict
+  à 2 joueurs ; les deux barèmes du duel local au choix de l'hôte ; devinettes
+  simultanées (pas d'entracte en ligne) ; amis dans Le club (pas de nouvelle entrée de
+  menu) ; architecture hybride — amis/invitations/salons en DB (RLS + RPC), déroulé de
+  partie sur canal Realtime éphémère avec l'hôte arbitre ; quitter dissout le salon,
+  rien de persistant. Présence en ligne via Realtime Presence (zéro écriture DB).
+  Étapes : A amis (fait en premier) → B salons+invitations → C partie → D audit.
 - Base Vite `/` (domaine racine). L'ancienne URL github.io/movieguesser redirige.
 - `404.html` = copie d'index.html (fallback SPA GitHub Pages) — généré par `pnpm build`.
 

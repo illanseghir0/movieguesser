@@ -4,6 +4,7 @@ import { useRoute } from "vue-router";
 import { useGameStore } from "./stores/game";
 import { useListStore } from "./stores/list";
 import { useProfileStore } from "./stores/profile";
+import { useFriendsStore } from "./stores/friends";
 import TheHeader from "./components/TheHeader.vue";
 import TheFooter from "./components/TheFooter.vue";
 import HandoffOverlay from "./components/HandoffOverlay.vue";
@@ -23,6 +24,13 @@ onMounted(() => {
   profile.init();
   list.boot();
   list.loadCatalog(); // précharge le catalogue (covers du carrousel)
+});
+
+/* connecté = présent sur le canal "online" (état en ligne des amis) */
+const friends = useFriendsStore();
+watch(() => profile.profile, (p) => {
+  if (p) { friends.startPresence(); friends.load(); }
+  else friends.stopPresence();
 });
 </script>
 
