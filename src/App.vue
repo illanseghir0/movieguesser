@@ -5,6 +5,7 @@ import { useGameStore } from "./stores/game";
 import { useListStore } from "./stores/list";
 import { useProfileStore } from "./stores/profile";
 import TheHeader from "./components/TheHeader.vue";
+import TheFooter from "./components/TheFooter.vue";
 import HandoffOverlay from "./components/HandoffOverlay.vue";
 
 const route = useRoute();
@@ -35,6 +36,7 @@ onMounted(() => {
   <div class="wrap">
     <TheHeader />
     <router-view />
+    <TheFooter />
   </div>
 
   <HandoffOverlay v-if="game.handoffOpen" />

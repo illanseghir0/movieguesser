@@ -8,26 +8,19 @@ const route = useRoute();
 const game = useGameStore();
 const profile = useProfileStore();
 
-/* la barre disparaît en pleine partie (immersion) ; sur l'accueil elle
-   n'apparaît que si elle a quelque chose à montrer (connexion) */
-const showNav = computed(() =>
-  route.name !== "jeu" && (route.name !== "accueil" || profile.enabled));
-
 const initiale = computed(() =>
   (profile.profile?.username ?? "?").charAt(0).toUpperCase());
-
-/* le titre ramène à l'accueil (sauf en pleine partie) */
-function homeClick() {
-  if (route.name !== "jeu") game.goHome();
-}
 </script>
 
 <template>
-  <nav v-if="showNav" class="navbar">
-    <div class="side">
+  <header class="bar">
+    <div class="side left">
       <button v-if="route.name !== 'accueil'" class="linkBtn" @click="game.goHome()">← Accueil</button>
     </div>
-    <div class="side">
+
+    <h1 @click="game.goHome()">MovieGuesser</h1>
+
+    <div class="side right">
       <template v-if="profile.enabled">
         <button v-if="profile.profile && route.name === 'profil'" class="linkBtn"
                 @click="profile.signOut()">déconnexion</button>
@@ -41,10 +34,5 @@ function homeClick() {
         <button v-else class="linkBtn" @click="game.goProfile()">Connexion</button>
       </template>
     </div>
-  </nav>
-
-  <header class="bar">
-    <div class="billing">A Letterboxd Game</div>
-    <h1 @click="homeClick">MovieGuesser</h1>
   </header>
 </template>
