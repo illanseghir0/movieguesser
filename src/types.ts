@@ -31,6 +31,26 @@ export interface CatalogEntry {
   films: Film[] | null;
 }
 
+/** défi compétitif fixé par l'équipe (table `challenges`) */
+export interface Challenge {
+  id: number;
+  title: string;
+  list_slug: string;
+  rounds: number;
+  timer_seconds: number;
+  starts_at: string;
+  ends_at: string;
+}
+
+/** ligne du classement d'un défi (challenge_scores + username) */
+export interface ChallengeRow {
+  user_id: string;
+  username: string;
+  score: number;
+  best_gap: number | null;
+  played_at: string;
+}
+
 export interface Profile {
   id: string;
   username: string;

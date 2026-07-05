@@ -33,7 +33,7 @@ onMounted(() => { quote.value = QUOTES[(Math.random() * QUOTES.length) | 0]; });
     <div class="breakout">
     <nav class="menu">
       <div class="menuRow" role="button" tabindex="0"
-           @click="game.goSetup()" @keydown.enter="game.goSetup()">
+           @click="game.goModes()" @keydown.enter="game.goModes()">
         <span class="lbl">Nouvelle séance</span>
       </div>
       <div v-if="profile.enabled" class="menuRow" role="button" tabindex="0"

@@ -7,7 +7,8 @@ import { REDUCE } from "../lib/env";
 
 const props = defineProps<{
   names: [string, string];
-  guesses: [number, number];
+  /** second pari null = révélation solo (mode compétitif) */
+  guesses: [number, number | null];
   rank: number;
   maxRank: number;
   stage: number;   // 0: paris posés, 1: vrai rang, 2: verdict
@@ -39,7 +40,7 @@ const markStyle = (g: number, visible: boolean) => ({
       <div class="bub">{{ names[0].split(" ")[0] }} · {{ guesses[0] }}</div>
       <div class="pin"></div>
     </div>
-    <div class="mark m2" :class="{ won: stage >= 2 && win !== 1 }"
+    <div v-if="guesses[1] !== null" class="mark m2" :class="{ won: stage >= 2 && win !== 1 }"
          :style="markStyle(guesses[1], placed)">
       <div class="bub">{{ names[1].split(" ")[0] }} · {{ guesses[1] }}</div>
       <div class="pin"></div>

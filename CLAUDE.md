@@ -17,8 +17,10 @@ Backend : Supabase (auth OTP, Postgres, RLS). Tests : Vitest 2 + happy-dom 15. D
 push sur `main` → GitHub Actions (typecheck + tests + build) → Pages sur movieguesser.fr.
 
 ```
-src/router.ts         /, /seance, /profil, /jeu, /fin — guards : /jeu et /fin exigent round > 0
-src/stores/game.ts    boucle de jeu ; navigue via router.push (pas d'enum screen)
+src/router.ts         /, /nouvelle-seance (choix du mode), /seance, /profil, /jeu, /fin,
+                      /competitif (+ /jeu, /fin) — guards : routes de jeu si round > 0
+src/stores/game.ts    boucle de jeu ; kind "local" (duel) ou "compet" (solo) ; router.push
+src/stores/compet.ts  défi actif + classement + envoi du score (RPC submit_challenge_score)
 src/stores/list.ts    catalogue (table lists), sélection, cache localStorage 7j, ensureMeta
 src/stores/settings.ts réglages persistés (clé localStorage héritée : gtrCfg — ne pas renommer)
 src/stores/profile.ts auth OTP email + profil + stats via RPC record_game
@@ -40,6 +42,13 @@ supabase/*.sql        schema, hardening (RPC + policies), seed_lists (généré)
   révélation (1100 ms / 2450 ms). C'est un choix de game design testé — ne pas « simplifier ».
 - **Ordre de passage** alterné ou aléatoire ; l'écran Entracte s'affiche avant CHAQUE joueur
   (secret des devinettes). Ancienne option « Toujours J1 » supprimée, migrée vers alterné.
+- **Mode compétitif** : solo, règles fixées par l'équipe dans la table `challenges`
+  (liste, manches, chrono) — jamais modifiables par le joueur. Barème par manche :
+  `ceil((500 - écart)/10)` (helper `competPoints`). Une seule participation par joueur
+  et par défi, appliquée par la RPC `submit_challenge_score` (security definer, bornes,
+  fenêtre temporelle) ; l'abandon ne consomme pas la participation. Jouable sans compte
+  mais hors classement. SQL : `supabase/competitif.sql` (idempotent ; relancer son
+  dernier bloc pour créer les défis suivants).
 - Base Vite `/` (domaine racine). L'ancienne URL github.io/movieguesser redirige.
 - `404.html` = copie d'index.html (fallback SPA GitHub Pages) — généré par `pnpm build`.
 

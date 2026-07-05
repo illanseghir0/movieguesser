@@ -338,6 +338,54 @@ button.xl{font-size:16px;padding:22px 64px;letter-spacing:.22em}
   margin-bottom:24px}
 
 /* ============================================================
+   nouvelle séance (choix du mode) + mode compétitif
+   ============================================================ */
+
+/* descriptions en regard des entrées du menu-sommaire */
+.menuRow .mdesc{margin-left:auto;font-family:var(--serif);font-style:italic;
+  color:#b9ae97;font-size:15px;text-align:right;flex-shrink:0}
+.menuRow .soon{font-size:10px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--muted);border:1px solid var(--line);border-radius:3px;
+  padding:5px 12px;margin-left:20px;flex-shrink:0}
+.menuRow.off{cursor:default;opacity:.5}
+.menuRow.off:hover .lbl{transform:none;color:var(--text)}
+
+/* carte du défi : ticket horizontal, jaquette + règles */
+.challCard{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:6px;
+  overflow:hidden;background:var(--panel);backdrop-filter:blur(10px)}
+.challCover{position:relative;width:min(300px,38%);flex-shrink:0}
+.challCover img{width:100%;height:100%;object-fit:cover;display:block}
+.challBody{padding:26px 30px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.challTitle{font-family:var(--display);font-size:clamp(24px,4vw,38px);letter-spacing:.05em;
+  text-transform:uppercase;line-height:1;color:var(--cream)}
+.challList{color:var(--muted);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin-top:9px}
+.challRules{font-family:var(--serif);font-style:italic;color:#b9ae97;font-size:15px;
+  line-height:1.7;margin:16px 0 0}
+.challEnds{color:var(--muted);font-size:10px;letter-spacing:.24em;text-transform:uppercase;margin:14px 0 0}
+.competNote{text-align:center;color:var(--muted);font-size:12px;line-height:1.6;margin-top:12px}
+
+/* classement du défi : lignes éditoriales, filets fins */
+.ladder{border-top:1px solid var(--line)}
+.ladder .lrow{display:flex;align-items:baseline;gap:18px;padding:13px 8px;
+  border-bottom:1px solid var(--line)}
+.ladder .pos{font-family:var(--display);font-size:19px;color:var(--muted);width:34px;flex-shrink:0}
+.ladder .who{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ladder .when{margin-left:auto;color:var(--muted);font-size:10px;letter-spacing:.18em;flex-shrink:0}
+.ladder .sc{font-family:var(--display);font-size:23px;color:var(--cream);width:70px;
+  text-align:right;flex-shrink:0}
+.ladder .lrow.me{background:rgba(242,234,214,.05)}
+.ladder .lrow.me .who{color:var(--cream)}
+.ladder .lrow:first-child .pos{color:var(--cream)}
+
+@media (max-width:700px){
+  .menuRow{flex-wrap:wrap;row-gap:8px}
+  .menuRow .mdesc{margin-left:0;width:100%;text-align:left}
+  .challCard{flex-direction:column}
+  .challCover{width:100%;aspect-ratio:16/9}
+}
+
+/* ============================================================
    mobile : aération et hiérarchie des titres (desktop inchangé)
    ============================================================ */
 @media (max-width:560px){

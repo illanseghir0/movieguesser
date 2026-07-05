@@ -8,7 +8,7 @@ const annee = new Date().getFullYear();
       <div class="fBrand">MovieGuesser</div>
       <nav class="fNav" aria-label="Pied de page">
         <RouterLink to="/">Accueil</RouterLink>
-        <RouterLink to="/seance">La séance</RouterLink>
+        <RouterLink to="/nouvelle-seance">Nouvelle séance</RouterLink>
         <RouterLink to="/profil">Le club</RouterLink>
       </nav>
     </div>
