@@ -131,7 +131,11 @@ function setTargetCustom(e: Event) {
   if (v >= 50 && v <= 99999) settings.target = v;
 }
 function timerOn() { if (!settings.timer) settings.timer = 10; }
-const showAll = ref(false);   // grille de tous les classements
+const showAll = ref(false);   // modale « voir tout » des classements
+function pickFromAll(entry: (typeof list.catalog)[number]) {
+  list.selectList(entry);
+  showAll.value = false;
+}
 const showRules = ref(false); // règles repliées derrière « Personnaliser »
 const ruleSummary = computed(() => {
   const m = settings.mode === "rounds"
@@ -149,9 +153,11 @@ function setTimer(e: Event) {
   <section>
     <div class="setHead">La séance</div>
 
-    <div class="actLbl">Choisis le classement</div>
+    <div class="actLbl">Choisis le classement
+      <button class="ghost lblBtn" @click="showAll = true">Voir tout</button>
+    </div>
     <div class="field" style="margin-bottom:0">
-      <div v-if="!showAll" class="carWrap">
+      <div class="carWrap">
         <div class="carousel" :class="{ grabbing: dragging }"
              @pointerenter="hovering = true" @pointerleave="hovering = false"
              @pointerdown="dragDown" @pointermove="dragMove"
@@ -172,30 +178,37 @@ function setTimer(e: Event) {
         <button class="cnav next" type="button" aria-label="Classements suivants" @click="carNav(1)">›</button>
       </div>
 
-      <!-- vue « voir tout » : tous les classements, sans défilement -->
-      <div v-else class="lgrid">
-        <div v-for="e in list.catalog" :key="e.slug" class="lcard"
-             :class="{ sel: e.slug === list.selectedSlug }" role="button" tabindex="0"
-             @click="list.selectList(e)" @keydown.enter="list.selectList(e)">
-          <img v-if="e.cover" :src="e.cover" alt="" loading="lazy">
-          <div class="lgrad"></div>
-          <div class="linfo">
-            <div class="lt">{{ e.title }}</div>
-            <div class="lc">{{ e.count }} films</div>
-          </div>
-        </div>
-      </div>
-      <div class="seeAllRow">
-        <button class="linkBtn" @click="showAll = !showAll">
-          {{ showAll ? "revenir au défilement" : "voir tout" }}
-        </button>
-      </div>
       <div v-if="list.status && list.status.type !== 'ok'" class="statusWrap">
         <span class="statusChip" :class="list.status.type">
           <span class="dotc"></span><span>{{ list.status.msg }}</span>
         </span>
       </div>
     </div>
+
+    <!-- modale « voir tout » : galerie de tous les classements.
+         Teleport : la section animée (transform) capturerait le position:fixed -->
+    <Teleport to="body">
+    <div v-if="showAll" class="modal" @click.self="showAll = false">
+      <div class="panel allPanel">
+        <div class="allHead">
+          <div class="setHead" style="margin-bottom:0">Tous les classements</div>
+          <button class="ghost lblBtn" @click="showAll = false">Fermer</button>
+        </div>
+        <div class="lgrid">
+          <div v-for="e in list.catalog" :key="e.slug" class="lcard"
+               :class="{ sel: e.slug === list.selectedSlug }" role="button" tabindex="0"
+               @click="pickFromAll(e)" @keydown.enter="pickFromAll(e)">
+            <img v-if="e.cover" :src="e.cover" alt="" loading="lazy">
+            <div class="lgrad"></div>
+            <div class="linfo">
+              <div class="lt">{{ e.title }}</div>
+              <div class="lc">{{ e.count }} films</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </Teleport>
 
     <div class="actLbl">Joueurs</div>
     <div class="row2">
@@ -217,6 +230,7 @@ function setTimer(e: Event) {
         {{ showRules ? "Fermer" : "Personnaliser" }}
       </button>
     </div>
+    <Teleport to="body">
     <div v-if="showRules" class="modal" @click.self="showRules = false">
       <div class="panel rulesPanel">
       <div class="setHead" style="margin-bottom:26px">Règles</div>
@@ -275,6 +289,7 @@ function setTimer(e: Event) {
       </div>
       </div>
     </div>
+    </Teleport>
 
     <div class="btnrow launchRow">
       <button class="big xl" :disabled="!list.ready" @click="launch">Lancer la séance</button>
