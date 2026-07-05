@@ -82,6 +82,10 @@ Carte de membre, Le club, Admit One). Respecter `prefers-reduced-motion` (`REDUC
 - `.env.local` (non versionné) contient les clés Supabase du projet réel — s'en servir
   pour les vérifications REST, ne jamais l'afficher ni le committer.
 - L'ingestion Python a un cache disque `scripts/.meta_cache.json` (gitignoré).
+- Sécurité : audit dans `docs/SECURITY.md`, rejouable via le skill `security-audit`
+  (à relancer après quelques MEP). La clé anon est publique — la sécurité repose sur
+  les policies RLS + la RPC `record_game`. 4 vulns dev résiduelles (vite/esbuild,
+  serveur de dev only) attendent le passage Vite 6.
 
 ## Approche à adopter (consignes au futur agent)
 
