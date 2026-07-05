@@ -27,6 +27,14 @@ client, pas de backend applicatif à compromettre.
   - `profiles` : lecture publique de `username`/stats **assumée** (classements futurs) —
     pas d'email ni de donnée privée exposée.
 - **CI** : permissions minimales (`contents:read`, `pages:write`, `id-token:write`).
+- **Mode compétitif** (tables `challenges` / `challenge_scores`, probes du 05/07/2026) :
+  - insert direct dans `challenges` → `42501` (RLS)
+  - insert direct dans `challenge_scores` → `42501` (RLS)
+  - update du défi (`rounds=50`) → `[]` (0 ligne)
+  - `submit_challenge_score` anonyme → `permission denied` (execute réservé à
+    `authenticated`)
+  - côté fonction : session exigée, fenêtre temporelle vérifiée, score borné à
+    `rounds × 50`, une seule participation (PK + unique_violation).
 
 ### ⚠️ Accepté / à surveiller
 - **Dépendances de dev** : 4 vulnérabilités résiduelles (vite/esbuild), toutes limitées
@@ -47,6 +55,12 @@ client, pas de backend applicatif à compromettre.
 - **error_events** : insertion ouverte à l'anonyme (plafonnée à 10/session côté client
   seulement). Un acteur malveillant peut spammer la table. Impact = bruit/coût, pas de
   fuite. Ajouter un rate-limit Postgres si ça devient un problème.
+- **Score compétitif calculé côté client** : la RPC borne (0 à rounds × 50) mais ne
+  prouve pas le score — un joueur authentifié et motivé peut soumettre 500 via la
+  console. Compromis assumé d'un site statique sans serveur de partie. Mitigations
+  possibles le jour où le classement compte : envoyer le détail des manches
+  (film + pari) et re-calculer le barème dans la RPC, ou passer par une Edge Function
+  qui tire elle-même le deck (seed serveur).
 
 ## Purge post-audit
 Les probes laissent des lignes `probe_audit` / `test_verif` dans `error_events` :
