@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { REDUCE } from "../lib/env";
+import { useTurnTimer } from "../lib/useTurnTimer";
 import { useGameStore } from "../stores/game";
 import { useListStore } from "../stores/list";
 import { useSettingsStore } from "../stores/settings";
@@ -60,30 +61,17 @@ watch([() => game.handoffOpen, () => game.reveal, () => game.round], async ([h, 
   if (!h && !r) { await nextTick(); guessInput.value?.focus(); }
 }, { immediate: true });
 
-/* ---- chrono par tour (option) : amorce de pellicule ---- */
-const timeLeft = ref(0);
-let timerInt: number | undefined;
-function stopTurnTimer() { clearInterval(timerInt); timerInt = undefined; }
-function startTurnTimer() {
-  stopTurnTimer();
-  if (!settings.timer) return;
-  timeLeft.value = settings.timer;
-  timerInt = window.setInterval(() => {
-    timeLeft.value--;
-    if (timeLeft.value <= 0) {
-      stopTurnTimer();
-      // temps écoulé : on valide la saisie en cours, sinon pari au hasard
-      const v = parseInt(gval.value, 10);
-      const guess = v >= 1 && v <= list.maxRank ? v : 1 + ((Math.random() * list.maxRank) | 0);
-      gval.value = "";
-      game.submitGuess(guess);
-    }
-  }, 1000);
-}
+/* ---- chrono par tour (option) : horloge réelle, insensible au throttling ---- */
+const { timeLeft, start: startTurnTimer, stop: stopTurnTimer } = useTurnTimer(() => {
+  // temps écoulé : on valide la saisie en cours, sinon pari au hasard
+  const v = parseInt(gval.value, 10);
+  const guess = v >= 1 && v <= list.maxRank ? v : 1 + ((Math.random() * list.maxRank) | 0);
+  gval.value = "";
+  game.submitGuess(guess);
+});
 watch([() => game.handoffOpen, () => game.reveal, () => game.phase, () => game.round],
-  ([h, r]) => { if (!h && !r) startTurnTimer(); else stopTurnTimer(); },
+  ([h, r]) => { if (!h && !r) startTurnTimer(settings.timer); else stopTurnTimer(); },
   { immediate: true });
-onUnmounted(stopTurnTimer);
 
 const stage = computed(() => game.reveal?.stage ?? -1);
 

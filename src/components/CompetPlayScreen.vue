@@ -2,8 +2,9 @@
 /* Écran de jeu du mode compétitif : la boucle solo du store game
    (kind === "compet"). Même scène que le duel local, sans entracte ni
    second joueur ; le chrono est imposé par le défi. */
-import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { REDUCE } from "../lib/env";
+import { useTurnTimer } from "../lib/useTurnTimer";
 import { useGameStore } from "../stores/game";
 import { useListStore } from "../stores/list";
 import RevealLine from "./RevealLine.vue";
@@ -48,29 +49,18 @@ watch([() => game.reveal, () => game.round], async ([r]) => {
   if (!r) { await nextTick(); guessInput.value?.focus(); }
 }, { immediate: true });
 
-/* ---- chrono imposé par le défi ---- */
-const timeLeft = ref(0);
-let timerInt: number | undefined;
-function stopTurnTimer() { clearInterval(timerInt); timerInt = undefined; }
-function startTurnTimer() {
-  stopTurnTimer();
-  timeLeft.value = timerSec.value;
-  timerInt = window.setInterval(() => {
-    timeLeft.value--;
-    if (timeLeft.value <= 0) {
-      stopTurnTimer();
-      // temps écoulé : on valide la saisie en cours, sinon pari au hasard
-      const v = parseInt(gval.value, 10);
-      const guess = v >= 1 && v <= list.maxRank ? v : 1 + ((Math.random() * list.maxRank) | 0);
-      gval.value = "";
-      game.submitGuess(guess);
-    }
-  }, 1000);
-}
+/* ---- chrono imposé par le défi : horloge réelle, insensible au throttling
+        (geler l'onglet ne donne plus de temps de réflexion) ---- */
+const { timeLeft, start: startTurnTimer, stop: stopTurnTimer } = useTurnTimer(() => {
+  // temps écoulé : on valide la saisie en cours, sinon pari au hasard
+  const v = parseInt(gval.value, 10);
+  const guess = v >= 1 && v <= list.maxRank ? v : 1 + ((Math.random() * list.maxRank) | 0);
+  gval.value = "";
+  game.submitGuess(guess);
+});
 watch([() => game.reveal, () => game.round],
-  ([r]) => { if (!r && game.round > 0) startTurnTimer(); else stopTurnTimer(); },
+  ([r]) => { if (!r && game.round > 0) startTurnTimer(timerSec.value); else stopTurnTimer(); },
   { immediate: true });
-onUnmounted(stopTurnTimer);
 
 const stage = computed(() => game.reveal?.stage ?? -1);
 

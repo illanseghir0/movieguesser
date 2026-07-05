@@ -8,13 +8,9 @@ vi.mock("../src/lib/supabase", () => ({ supabase: null }));
 
 import { useListStore } from "../src/stores/list";
 
-const entry = (films: Film[] | null): CatalogEntry => ({
-  slug: "ma-liste",
-  url: "https://letterboxd.com/dave/list/ma-liste/",
-  title: "Ma Liste",
-  cover: null,
-  count: films?.length ?? 3,
-  films,
+const URL_LISTE = "https://letterboxd.com/dave/list/ma-liste/";
+const entry = (): CatalogEntry => ({
+  slug: "ma-liste", url: URL_LISTE, title: "Ma Liste", cover: null, count: 3,
 });
 
 const seed = (n: number): Film[] =>
@@ -23,12 +19,18 @@ const seed = (n: number): Film[] =>
     slug: `film-${i + 1}`, url: `https://letterboxd.com/film/film-${i + 1}/`,
   }));
 
+/** simule une liste déjà jouée : cache localStorage frais */
+function primeCache(films: Film[], title = "Ma Liste") {
+  localStorage.setItem("duelList:" + URL_LISTE,
+    JSON.stringify({ t: Date.now(), title, films }));
+}
+
 beforeEach(() => {
   localStorage.clear();
   setActivePinia(createPinia());
 });
 
-describe("list store — catalogue et sélection", () => {
+describe("list store — catalogue et sélection (sans Supabase)", () => {
   it("retombe sur le catalogue embarqué sans Supabase", async () => {
     const list = useListStore();
     await list.loadCatalog();
@@ -36,39 +38,19 @@ describe("list store — catalogue et sélection", () => {
     expect(list.catalog[0].slug).toBe("letterboxds-top-500-films");
   });
 
-  it("sélectionne une liste du catalogue (films en DB)", async () => {
-    const list = useListStore();
-    await list.selectList(entry(seed(250)));
-    expect(list.ready).toBe(true);
-    expect(list.films).toHaveLength(250);
-    expect(list.maxRank).toBe(250);
-    expect(list.listTitle).toBe("Ma Liste");
-    expect(list.selectedSlug).toBe("ma-liste");
-    expect(list.status?.type).toBe("ok");
-    // mémorisée pour la prochaine visite + cache localStorage
-    expect(localStorage.getItem("duelLast")).toBe(entry(null).url);
-    const cache = JSON.parse(localStorage.getItem("duelList:" + entry(null).url)!);
-    expect(cache.films).toHaveLength(250);
-  });
-
-  it("préfère le cache local frais (enrichi d'affiches) aux films de la DB", async () => {
-    const e = entry(seed(3));
+  it("sert le cache local frais (enrichi d'affiches) sans aucune requête", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
     const enriched = seed(3).map((f) => ({ ...f, poster: "https://a.ltrbxd.com/p.jpg" }));
-    localStorage.setItem("duelList:" + e.url,
-      JSON.stringify({ t: Date.now(), title: "Ma Liste", films: enriched }));
+    primeCache(enriched);
     const list = useListStore();
-    await list.selectList(e);
+    await list.selectList(entry());
+    expect(list.ready).toBe(true);
     expect(list.films![0].poster).toBe("https://a.ltrbxd.com/p.jpg");
-  });
-
-  it("ignore un cache périmé (plus de 7 jours) au profit de la DB", async () => {
-    const e = entry(seed(3));
-    localStorage.setItem("duelList:" + e.url,
-      JSON.stringify({ t: Date.now() - 8 * 864e5, title: "Vieille", films: seed(2) }));
-    const list = useListStore();
-    await list.selectList(e);
-    expect(list.films).toHaveLength(3); // la DB, pas le vieux cache
-    expect(list.listTitle).toBe("Ma Liste");
+    expect(list.selectedSlug).toBe("ma-liste");
+    expect(localStorage.getItem("duelLast")).toBe(URL_LISTE);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 
   it("récupère affiche et réalisateur à la demande (ensureMeta)", async () => {
@@ -79,27 +61,28 @@ describe("list store — catalogue et sélection", () => {
       </head><body>${"x".repeat(600)}</body></html>`;
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => filmHtml }));
 
+    primeCache(seed(3));
     const list = useListStore();
-    await list.selectList(entry(seed(3)));
+    await list.selectList(entry());
     const f = list.films![0];
     expect(f.poster).toBeUndefined();
     await list.ensureMeta(f);
     expect(f.poster).toBe("https://a.ltrbxd.com/resized/film-poster/x.jpg");
     expect(f.director).toBe("Une Réalisatrice");
     // le cache localStorage est enrichi au passage
-    const cache = JSON.parse(localStorage.getItem("duelList:" + entry(null).url)!);
+    const cache = JSON.parse(localStorage.getItem("duelList:" + URL_LISTE)!);
     expect(cache.films[0].poster).toContain("film-poster");
     vi.unstubAllGlobals();
   });
 
-  it("n'appelle aucun proxy pour les films déjà enrichis en DB", async () => {
+  it("n'appelle aucun proxy pour les films déjà enrichis", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
-    const enriched: Film[] = seed(2).map((f) => ({
+    primeCache(seed(2).map((f) => ({
       ...f, poster: "https://a.ltrbxd.com/resized/film-poster/x.jpg", director: "Quelqu'un",
-    }));
+    })));
     const list = useListStore();
-    await list.selectList(entry(enriched));
+    await list.selectList(entry());
     await list.ensureMeta(list.films![0]);
     await list.ensureMeta(list.films![1]);
     expect(fetchSpy).not.toHaveBeenCalled();
@@ -108,8 +91,9 @@ describe("list store — catalogue et sélection", () => {
 
   it("marque affiche/réalisateur comme absents si tous les proxys échouent", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
+    primeCache(seed(1));
     const list = useListStore();
-    await list.selectList(entry(seed(1)));
+    await list.selectList(entry());
     const f = list.films![0];
     await list.ensureMeta(f);
     expect(f.poster).toBeNull();     // plus jamais retenté pendant la partie

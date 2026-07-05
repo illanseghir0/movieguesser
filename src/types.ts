@@ -20,15 +20,14 @@ export interface RoundResult {
   pts: number;    // points marqués (mode course aux points)
 }
 
-/** un classement du catalogue curaté (table `lists` côté Supabase) */
+/** un classement du catalogue curaté (table `lists` côté Supabase) —
+    entrée légère : les films sont récupérés à la demande, à la sélection */
 export interface CatalogEntry {
   slug: string;
   url: string;
   title: string;
   cover: string | null;
   count: number;
-  /** films depuis la DB ; null = à charger via proxys (catalogue de secours) */
-  films: Film[] | null;
 }
 
 /** défi compétitif fixé par l'équipe (table `challenges`) */

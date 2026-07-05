@@ -94,7 +94,8 @@ export const useListStore = defineStore("list", () => {
     }
   }
 
-  /* ---- films.json pré-scrapé, servi à côté de la page (liste par défaut) ---- */
+  /* ---- films.json pré-scrapé, servi à côté de la page (secours sans DB :
+          affiches paysage, pas de réalisateur -> ensureMeta complètera) ---- */
   function normFilms(data: any[]): Film[] {
     return data
       .map((d) => ({
@@ -106,16 +107,55 @@ export const useListStore = defineStore("list", () => {
       .sort((a, b) => a.rank - b.rank);
   }
 
-  /* ---- boot : dernière liste jouée, sinon le Top 500 par défaut ---- */
+  /** mapping d'un film JSONB de la table `lists` (enrichi à l'ingestion) :
+      si affiche + réalisateur sont présents, aucun proxy pendant la partie ;
+      clés absentes (anciennes données) -> chemin paresseux conservé */
+  function mapDbFilm(f: any): Film {
+    return {
+      rank: +f.rank, title: String(f.title), year: f.year ?? null,
+      slug: f.slug ?? null,
+      url: f.slug ? `https://letterboxd.com/film/${f.slug}/` : null,
+      ...("poster" in f ? { poster: f.poster ?? null } : {}),
+      ...("director" in f ? { director: f.director ?? null } : {}),
+    };
+  }
+
+  /** les films d'une seule liste, à la demande (le catalogue est léger :
+      le JSONB n'est jamais téléchargé en masse au démarrage) */
+  async function fetchDbList(slug: string): Promise<{ url: string; title: string; films: Film[] } | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from("lists").select("url,title,films").eq("slug", slug).maybeSingle();
+      if (error) { reportError("list_films_db", error.message); return null; }
+      if (!data || !Array.isArray(data.films) || !data.films.length) return null;
+      return { url: data.url, title: data.title, films: (data.films as any[]).map(mapDbFilm) };
+    } catch (e) {
+      reportError("list_films_db", e instanceof Error ? e.message : "inconnu");
+      return null;
+    }
+  }
+
+  const DEFAULT_SLUG = "letterboxds-top-500-films";
+
+  /* ---- boot : dernière liste jouée, sinon le Top 500 par défaut
+          (depuis la DB — enrichi et mis en cache — sinon films.json) ---- */
   async function boot(): Promise<string | null> {
     const savedLast = localStorage.getItem("duelLast");
     if (savedLast && loadFromCache(savedLast)) return savedLast;
+    const def = await fetchDbList(DEFAULT_SLUG);
+    if (def) {
+      applyList(def.films, def.title, def.url);
+      saveCache(); // prochaine visite : zéro requête
+      setStatus("ok", `${def.title} · ${def.films.length} films`);
+      return null;
+    }
     try {
       const r = await fetch(import.meta.env.BASE_URL + "films.json");
       const d = r.ok ? await r.json() : null;
       if (d && Array.isArray(d) && d.length) {
         applyList(normFilms(d), "Letterboxd's Top 500 Films", null);
-        selectedSlug.value = "letterboxds-top-500-films";
+        selectedSlug.value = DEFAULT_SLUG;
         setStatus("ok", `Letterboxd's Top 500 Films · ${films.value!.length} films`);
         return null;
       }
@@ -132,22 +172,12 @@ export const useListStore = defineStore("list", () => {
       try {
         const { data, error } = await supabase
           .from("lists")
-          .select("slug,url,title,cover_url,film_count,films")
+          .select("slug,url,title,cover_url,film_count")
           .order("position");
         if (!error && data?.length) {
           catalog.value = data.map((r: any): CatalogEntry => ({
             slug: r.slug, url: r.url, title: r.title,
             cover: r.cover_url ?? null, count: r.film_count,
-            films: (r.films as any[]).map((f): Film => ({
-              rank: +f.rank, title: String(f.title), year: f.year ?? null,
-              slug: f.slug ?? null,
-              url: f.slug ? `https://letterboxd.com/film/${f.slug}/` : null,
-              // affiche + réalisateur enrichis à l'ingestion : si présents,
-              // aucun proxy n'est appelé pendant la partie ; si la clé est
-              // absente (anciennes données), on garde le chemin paresseux
-              ...("poster" in f ? { poster: f.poster ?? null } : {}),
-              ...("director" in f ? { director: f.director ?? null } : {}),
-            })),
           }));
           return;
         }
@@ -159,15 +189,17 @@ export const useListStore = defineStore("list", () => {
     catalog.value = FALLBACK_CATALOG;
   }
 
-  /** sélection d'un classement du carrousel */
+  /** sélection d'un classement du carrousel : cache local, sinon les films
+      de cette seule liste depuis la DB, sinon les proxys (secours) */
   async function selectList(e: CatalogEntry) {
     selectedSlug.value = e.slug;
     if (loadFromCache(e.url)) return; // version locale enrichie d'affiches
-    if (e.films) {
-      applyList(e.films, e.title, e.url);
+    const db = await fetchDbList(e.slug);
+    if (db) {
+      applyList(db.films, e.title, e.url);
       saveCache();
       localStorage.setItem("duelLast", e.url);
-      setStatus("ok", `${e.title} · ${e.films.length} films`);
+      setStatus("ok", `${e.title} · ${db.films.length} films`);
     } else {
       await loadList(e.url); // catalogue de secours : via proxys
     }

@@ -21,7 +21,9 @@ src/router.ts         /, /nouvelle-seance (choix du mode), /seance, /profil, /je
                       /competitif (+ /jeu, /fin) — guards : routes de jeu si round > 0
 src/stores/game.ts    boucle de jeu ; kind "local" (duel) ou "compet" (solo) ; router.push
 src/stores/compet.ts  défi actif + classement + envoi du score (RPC submit_challenge_score)
-src/stores/list.ts    catalogue (table lists), sélection, cache localStorage 7j, ensureMeta
+src/stores/list.ts    catalogue léger (table lists SANS le JSONB films) ; les films d'une
+                      liste sont fetchés par slug à la sélection ; cache localStorage 7j ;
+                      films.json = secours sans DB uniquement (pas de réalisateur)
 src/stores/settings.ts réglages persistés (clé localStorage héritée : gtrCfg — ne pas renommer)
 src/stores/profile.ts auth OTP email + profil + stats via RPC record_game
 src/lib/letterboxd.ts fetch via proxys CORS + parsing (fallback seulement, voir Fragilités)
@@ -35,6 +37,10 @@ supabase/*.sql        schema, hardening (RPC + policies), seed_lists (généré)
 - **Données de jeu 100 % en DB** : la table `lists` contient les films en JSONB **enrichi**
   (rank/title/year/slug/poster/director). Aucun proxy CORS pendant une partie normale.
   Les proxys (allorigins → codetabs → corsproxy) ne restent que pour d'anciens caches.
+  Le JSONB n'est **jamais téléchargé en masse** : catalogue léger au boot (~1 Ko), films
+  d'une seule liste par `eq.slug` à la sélection (puis cache localStorage 7 j). Le chrono
+  de tour (`src/lib/useTurnTimer.ts`) est basé sur l'horloge réelle, pas sur des ticks
+  — ne pas revenir à un décompte setInterval (contournable en gelant l'onglet).
 - **Le profil connecté = Joueur 1** des parties locales ; ses stats s'écrivent uniquement
   via la RPC `record_game` (security definer, incréments bornés). Pas d'update direct.
 - **Auth par code OTP email** (signInWithOtp/verifyOtp), pas de mot de passe.
