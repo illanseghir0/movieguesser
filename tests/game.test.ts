@@ -225,6 +225,15 @@ describe("fins de partie", () => {
     expect(push).toHaveBeenCalledWith("/fin");
   });
 
+  it("sortie par le header (abandon) : clôture silencieuse, pas de générique", () => {
+    const game = freshGame();
+    push.mockClear();
+    game.abandon();
+    expect(game.round).toBe(0);          // les guards bloquent /jeu et /fin
+    expect(game.handoffOpen).toBe(false);
+    expect(push).not.toHaveBeenCalled(); // c'est le header qui navigue ensuite
+  });
+
   it("revanche : repartie propre avec les mêmes joueurs", () => {
     const game = freshGame({ rounds: 1 });
     playRound(game, 0, 5);

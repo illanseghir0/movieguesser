@@ -45,7 +45,8 @@ supabase/*.sql        schema, hardening (RPC + policies), seed_lists (généré)
   de tour (`src/lib/useTurnTimer.ts`) est basé sur l'horloge réelle, pas sur des ticks
   — ne pas revenir à un décompte setInterval (contournable en gelant l'onglet).
 - **Le profil connecté = Joueur 1** des parties locales ; ses stats s'écrivent uniquement
-  via la RPC `record_game` (security definer, incréments bornés). Pas d'update direct.
+  via la RPC `record_game` (security definer, incréments bornés, rate-limit 20 s via
+  `profiles.last_game_at`). Pas d'update direct.
 - **Auth par code OTP email** (signInWithOtp/verifyOtp), pas de mot de passe.
 - **`scoreShown` ≠ `score`** : le score affiché ne rattrape le réel qu'au temps 3 de la
   révélation (1100 ms / 2450 ms). C'est un choix de game design testé — ne pas « simplifier ».

@@ -121,6 +121,14 @@ describe("boucle solo du défi", () => {
     });
   });
 
+  it("sortie par le header : rien n'est soumis, la participation reste à jouer", () => {
+    const game = freshCompet({ rounds: 10 });
+    playRound(game, 10);
+    game.abandon();
+    expect(game.round).toBe(0);
+    expect(useCompetStore().submitState).toBe("none"); // pas même « partial »
+  });
+
   it("une partie locale après un défi repart en mode duel", () => {
     const game = freshCompet({ rounds: 1 });
     playRound(game, 0);

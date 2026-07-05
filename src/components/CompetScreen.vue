@@ -14,6 +14,7 @@ const list = useListStore();
 const profile = useProfileStore();
 
 const err = ref("");
+const joining = ref(false); // anti double-clic pendant le chargement de la liste
 
 onMounted(() => {
   compet.load();
@@ -39,12 +40,19 @@ const ruleLine = computed(() => {
 });
 
 async function participer() {
+  if (joining.value) return;
   err.value = "";
   const c = compet.challenge, entry = listEntry.value;
   if (!c || !entry) { err.value = "Le classement du défi est introuvable — réessaie dans un instant."; return; }
-  await list.selectList(entry);
-  if (!list.ready) { err.value = "Impossible de charger le classement — réessaie dans un instant."; return; }
-  game.startCompet({ challengeId: c.id, rounds: c.rounds, timer: c.timer_seconds });
+  joining.value = true;
+  try {
+    // remember=false : ne pas écraser la « dernière liste jouée » du mode local
+    await list.selectList(entry, false);
+    if (!list.ready) { err.value = "Impossible de charger le classement — réessaie dans un instant."; return; }
+    game.startCompet({ challengeId: c.id, rounds: c.rounds, timer: c.timer_seconds });
+  } finally {
+    joining.value = false;
+  }
 }
 
 function fmtDate(iso: string) {
@@ -67,9 +75,20 @@ function fmtDate(iso: string) {
         Une seule participation — vise juste.
       </p>
 
-      <div v-if="!compet.loaded" class="statusWrap">
+      <div v-if="!compet.loaded || compet.loading" class="statusWrap">
         <span class="statusChip info"><span class="dotc"></span><span>Recherche du défi en cours…</span></span>
       </div>
+
+      <!-- erreur réseau/DB : ne pas la faire passer pour « aucun défi » -->
+      <template v-else-if="compet.loadError">
+        <div class="statusWrap">
+          <span class="statusChip err"><span class="dotc"></span>
+            <span>Impossible de joindre la salle des défis</span></span>
+        </div>
+        <div class="btnrow" style="margin-top:18px">
+          <button class="ghost" @click="compet.load()">Réessayer</button>
+        </div>
+      </template>
 
       <p v-else-if="!compet.challenge" class="clubIntro" style="color:var(--muted)">
         Aucun défi en cours pour le moment — reviens bientôt,
@@ -92,8 +111,8 @@ function fmtDate(iso: string) {
         </div>
 
         <div class="btnrow" style="margin-top:26px">
-          <button v-if="!compet.myRow" class="big xl" :disabled="!listEntry" @click="participer()">
-            Participer
+          <button v-if="!compet.myRow" class="big xl" :disabled="!listEntry || joining" @click="participer()">
+            {{ joining ? "Ouverture de la salle…" : "Participer" }}
           </button>
           <button v-else class="big xl" disabled>Score enregistré · {{ compet.myRow.score }} pts</button>
         </div>

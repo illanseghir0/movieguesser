@@ -53,6 +53,14 @@ describe("list store — catalogue et sélection (sans Supabase)", () => {
     vi.unstubAllGlobals();
   });
 
+  it("remember=false : ne devient pas la « dernière liste jouée » (défi)", async () => {
+    primeCache(seed(3));
+    const list = useListStore();
+    await list.selectList(entry(), false);
+    expect(list.ready).toBe(true);
+    expect(localStorage.getItem("duelLast")).toBeNull();
+  });
+
   it("récupère affiche et réalisateur à la demande (ensureMeta)", async () => {
     const filmHtml = `<html><head>
       <meta property="og:title" content="Film 1 (2000)">

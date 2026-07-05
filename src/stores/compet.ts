@@ -22,6 +22,8 @@ export const useCompetStore = defineStore("compet", () => {
   const board = ref<ChallengeRow[]>([]);
   const loading = ref(false);
   const loaded = ref(false);
+  /** échec de chargement (réseau/DB) — à distinguer de « pas de défi » */
+  const loadError = ref(false);
   const submitState = ref<SubmitState>("none");
   const submittedScore = ref<number | null>(null);
 
@@ -33,11 +35,13 @@ export const useCompetStore = defineStore("compet", () => {
     return i < 0 ? null : i + 1;
   });
 
-  /** charge le défi actif (fenêtre temporelle courante) puis son classement */
+  /** charge le défi actif (fenêtre temporelle courante) puis son classement.
+      Relançable (bouton réessayer) : chaque appel refait la requête. */
   async function load() {
     if (!supabase) { loaded.value = true; return; }
     if (loading.value) return;
     loading.value = true;
+    loadError.value = false;
     try {
       const nowIso = new Date().toISOString();
       const { data, error } = await supabase
@@ -50,6 +54,7 @@ export const useCompetStore = defineStore("compet", () => {
     } catch (e) {
       reportError("compet_load", e instanceof Error ? e.message : "inconnu");
       challenge.value = null;
+      loadError.value = true; // réseau/DB : ne pas afficher « aucun défi »
     } finally {
       loading.value = false;
       loaded.value = true;
@@ -93,7 +98,7 @@ export const useCompetStore = defineStore("compet", () => {
   }
 
   return {
-    enabled, challenge, board, loading, loaded, submitState, submittedScore,
+    enabled, challenge, board, loading, loaded, loadError, submitState, submittedScore,
     myRow, myRank, load, loadBoard, submit,
   };
 });

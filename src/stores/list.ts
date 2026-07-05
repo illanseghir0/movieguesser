@@ -72,12 +72,14 @@ export const useListStore = defineStore("list", () => {
     }
   }
 
-  function loadFromCache(base: string): boolean {
+  /** remember=false : ne pas retenir comme « dernière liste jouée »
+      (le mode compétitif ne doit pas écraser le choix du mode local) */
+  function loadFromCache(base: string, remember = true): boolean {
     try {
       const c = JSON.parse(localStorage.getItem("duelList:" + base) || "null");
       if (c && Date.now() - c.t < CACHE_TTL && Array.isArray(c.films) && c.films.length) {
         applyList(c.films, c.title, base);
-        localStorage.setItem("duelLast", base);
+        if (remember) localStorage.setItem("duelLast", base);
         setStatus("ok", `${c.title} · ${c.films.length} films`);
         return true;
       }
@@ -87,10 +89,10 @@ export const useListStore = defineStore("list", () => {
 
   /** LEGACY : aspiration via proxys (voir lib/legacyScrape) — secours
       uniquement, quand ni le cache ni la DB n'ont la liste */
-  async function loadList(url: string) {
+  async function loadList(url: string, remember = true) {
     const base = normListUrl(url);
     if (!base) { setStatus("err", "URL invalide — attendu : letterboxd.com/…/list/…"); return; }
-    if (loadFromCache(base)) return;
+    if (loadFromCache(base, remember)) return;
 
     loading.value = true;
     try {
@@ -98,7 +100,7 @@ export const useListStore = defineStore("list", () => {
         setStatus("info", `Récupération — page ${page}${totalPages ? ` / ${totalPages}` : ""}…`));
       applyList(scraped.films, scraped.title, base);
       saveCache();
-      localStorage.setItem("duelLast", base);
+      if (remember) localStorage.setItem("duelLast", base);
       setStatus("ok", `${scraped.title} · ${scraped.films.length} films`);
     } catch {
       setStatus("err", "Liste inaccessible (proxys indisponibles ou liste privée) — réessaie dans un instant");
@@ -205,18 +207,19 @@ export const useListStore = defineStore("list", () => {
   }
 
   /** sélection d'un classement du carrousel : cache local, sinon les films
-      de cette seule liste depuis la DB, sinon les proxys (secours) */
-  async function selectList(e: CatalogEntry) {
+      de cette seule liste depuis la DB, sinon les proxys (secours).
+      remember=false pour une sélection hors mode local (défi compétitif). */
+  async function selectList(e: CatalogEntry, remember = true) {
     selectedSlug.value = e.slug;
-    if (loadFromCache(e.url)) return; // version locale enrichie d'affiches
+    if (loadFromCache(e.url, remember)) return; // version locale enrichie d'affiches
     const db = await fetchDbList(e.slug);
     if (db) {
       applyList(db.films, e.title, e.url);
       saveCache();
-      localStorage.setItem("duelLast", e.url);
+      if (remember) localStorage.setItem("duelLast", e.url);
       setStatus("ok", `${e.title} · ${db.films.length} films`);
     } else {
-      await loadList(e.url); // catalogue de secours : via proxys
+      await loadList(e.url, remember); // catalogue de secours : via proxys
     }
   }
 

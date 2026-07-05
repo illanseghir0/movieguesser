@@ -222,6 +222,17 @@ export const useGameStore = defineStore("game", () => {
   }
 
   function quit() { endGame(); }
+
+  /** clôture silencieuse (sortie par le header) : pas de générique,
+      rien n'est enregistré — en compétitif la participation reste à jouer.
+      round = 0 rend les écrans de jeu inaccessibles (guard requiresGame). */
+  function abandon() {
+    clearTimers();
+    handoffOpen.value = false;
+    reveal.value = null;
+    round.value = 0;
+  }
+
   function rematch() { startGame(); }
   function goHome() { router.push("/"); }
   function goModes() { router.push("/nouvelle-seance"); }
@@ -231,7 +242,7 @@ export const useGameStore = defineStore("game", () => {
   return {
     names, score, scoreShown, round, playRounds, deck, guesses, phase, order,
     handoffOpen, reveal, history, statsRecorded, kind, competCfg, current, currentPlayer,
-    start, startCompet, nextRound, closeHandoff, submitGuess, quit, rematch,
+    start, startCompet, nextRound, closeHandoff, submitGuess, quit, abandon, rematch,
     goHome, goModes, goSetup, goProfile,
   };
 });
