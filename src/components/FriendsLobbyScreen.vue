@@ -8,6 +8,7 @@
    Étape C à venir : le bouton Lancer démarrera la partie synchronisée. */
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { supabase } from "../lib/supabase";
+import { useDuelStore } from "../stores/duel";
 import { useFriendsStore } from "../stores/friends";
 import { useGameStore } from "../stores/game";
 import { useListStore } from "../stores/list";
@@ -18,6 +19,7 @@ import type { RoomConfig } from "../types";
 import ListPicker from "./ListPicker.vue";
 import RulesModal from "./RulesModal.vue";
 
+const duel = useDuelStore();
 const friends = useFriendsStore();
 const game = useGameStore();
 const list = useListStore();
@@ -53,8 +55,23 @@ watch([() => settings.mode, () => settings.rounds, () => settings.target,
        () => settings.timer, () => list.selectedSlug],
   () => { if (rooms.isHost && rooms.room) rooms.setConfig(buildConfig()); });
 
-/* quitter l'écran dissout le salon (hôte) ou libère la place (invité) */
-onUnmounted(() => { if (rooms.room && rooms.room.status !== "playing") rooms.leave(); });
+/* dès qu'on est en salon, le canal de jeu écoute (le lancement de
+   l'hôte arrive par là, même pour l'invité resté au lobby) */
+watch(() => rooms.room?.id, (id) => { if (id) duel.attach(id); }, { immediate: true });
+
+/* quitter l'écran dissout le salon (hôte) ou libère la place (invité) —
+   sauf quand on part jouer (duel.playing) */
+onUnmounted(() => {
+  if (rooms.room && !duel.playing) { duel.detach(); rooms.leave(); }
+});
+
+function launch() {
+  if (!otherName.value || !list.ready) return;
+  duel.hostStart(otherName.value, {
+    mode: settings.mode, rounds: settings.rounds,
+    target: settings.target, timer: settings.timer,
+  });
+}
 
 async function inviteFriend(id: string) {
   err.value = "";
@@ -177,10 +194,12 @@ const guestListTitle = computed(() => {
       <div v-if="err" class="formErr" style="text-align:center">{{ err }}</div>
 
       <div class="btnrow launchRow">
-        <button class="big xl" disabled>Lancer la séance</button>
+        <button class="big xl" :disabled="!otherName || !list.ready" @click="launch()">
+          Lancer la séance
+        </button>
       </div>
-      <p class="competNote" style="margin-top:-60px">
-        Le lancement synchronisé arrive à l'étape suivante — le salon, lui, est prêt.
+      <p v-if="!otherName" class="competNote" style="margin-top:-60px">
+        La séance se lance dès qu'un ami a pris place.
       </p>
     </template>
   </section>

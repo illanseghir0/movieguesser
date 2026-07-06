@@ -57,8 +57,8 @@ async function joinFromToast() {
   <div class="wrap">
     <TheHeader />
     <router-view />
-    <!-- pas de footer en pleine partie (immersion, duel comme compétitif) -->
-    <TheFooter v-if="route.name !== 'jeu' && route.name !== 'competJeu'" />
+    <!-- pas de footer en pleine partie (immersion, tous modes) -->
+    <TheFooter v-if="!['jeu', 'competJeu', 'amisJeu'].includes(String(route.name))" />
   </div>
 
   <HandoffOverlay v-if="game.handoffOpen" />

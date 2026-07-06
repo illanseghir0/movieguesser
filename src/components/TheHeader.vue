@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
+import { useDuelStore } from "../stores/duel";
 import { useGameStore } from "../stores/game";
 import { useProfileStore } from "../stores/profile";
 
 const route = useRoute();
+const duel = useDuelStore();
 const game = useGameStore();
 const profile = useProfileStore();
 
@@ -13,8 +15,9 @@ const initiale = computed(() =>
 
 /* sortie en pleine partie (écrans de jeu uniquement, pas les génériques) :
    on confirme, puis on clôt proprement — pas d'état zombie en mémoire */
+const inOnline = computed(() => route.name === "amisJeu" && duel.playing);
 const inPlay = computed(() =>
-  (route.name === "jeu" || route.name === "competJeu") && game.round > 0);
+  ((route.name === "jeu" || route.name === "competJeu") && game.round > 0) || inOnline.value);
 const pendingNav = ref<(() => void) | null>(null);
 
 function navGuard(fn: () => void) {
@@ -24,7 +27,8 @@ function navGuard(fn: () => void) {
 function leaveNow() {
   const fn = pendingNav.value;
   pendingNav.value = null;
-  game.abandon();
+  if (inOnline.value) duel.quit(); // quitte la partie ET le salon
+  else game.abandon();
   fn?.();
 }
 </script>
@@ -59,7 +63,8 @@ function leaveNow() {
         <div class="setHead" style="margin-bottom:14px">Quitter la séance ?</div>
         <p class="clubIntro" style="margin-bottom:22px">
           La partie en cours sera abandonnée — rien ne sera enregistré.
-          <template v-if="game.kind === 'compet'">En compétition, ta participation reste à jouer.</template>
+          <template v-if="inOnline">Le salon sera dissous pour l'autre joueur.</template>
+          <template v-else-if="game.kind === 'compet'">En compétition, ta participation reste à jouer.</template>
         </p>
         <div class="btnrow">
           <button class="big" @click="pendingNav = null">Rester</button>

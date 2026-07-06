@@ -25,6 +25,20 @@ export function competPoints(gap: number, listSize: number): number {
   return Math.max(0, Math.ceil((listSize - gap) / 10));
 }
 
+/** verdict d'une manche de duel (local ou en ligne) : plus proche gagne ;
+    en course aux points, le vainqueur marque l'écart entre les estimations */
+export function duelVerdict(g1: number, g2: number, rank: number, mode: "rounds" | "points"):
+  { win: 0 | 1 | 2; pts: number; d: [number, number] } {
+  const d1 = Math.abs(g1 - rank), d2 = Math.abs(g2 - rank);
+  const win: 0 | 1 | 2 = d1 < d2 ? 1 : d2 < d1 ? 2 : 0;
+  const pts = mode === "points" ? Math.abs(d1 - d2) : 0;
+  return { win, pts, d: [d1, d2] };
+}
+
+/** les trois temps de la révélation (voir « scoreShown ≠ score », CLAUDE.md) */
+export const REVEAL_STAGE1_MS = 1100;
+export const REVEAL_STAGE2_MS = 2450;
+
 export interface RevealState {
   stage: 0 | 1 | 2;      // 0: paris posés, 1: vrai rang, 2: verdict
   win: 0 | 1 | 2;
@@ -170,28 +184,24 @@ export const useGameStore = defineStore("game", () => {
     clearTimers();
     const f = current.value!;
     const [g1, g2] = guesses.value as [number, number];
-    const d1 = Math.abs(g1 - f.rank), d2 = Math.abs(g2 - f.rank);
-    let win: 0 | 1 | 2, pts = 0;
+    const { win, pts, d } = duelVerdict(g1, g2, f.rank, settings.mode);
     if (settings.mode === "points") {
-      // le vainqueur marque l'écart entre les deux estimations
-      pts = Math.abs(d1 - d2);
-      if (d1 < d2) { score.value[0] += pts; win = 1; }
-      else if (d2 < d1) { score.value[1] += pts; win = 2; }
-      else win = 0;
+      if (win === 1) score.value[0] += pts;
+      else if (win === 2) score.value[1] += pts;
     } else {
-      if (d1 < d2) { score.value[0]++; win = 1; }
-      else if (d2 < d1) { score.value[1]++; win = 2; }
-      else { score.value[0]++; score.value[1]++; win = 0; }
+      // égalité en mode manches : +1 chacun
+      if (win !== 2) score.value[0]++;
+      if (win !== 1) score.value[1]++;
     }
-    history.value.push({ title: f.title, year: f.year, rank: f.rank, g: [g1, g2], d: [d1, d2], win, pts });
+    history.value.push({ title: f.title, year: f.year, rank: f.rank, g: [g1, g2], d, win, pts });
 
-    reveal.value = { stage: 0, win, pts, d: [d1, d2] };
-    later(() => { if (reveal.value) reveal.value.stage = 1; }, 1100);
+    reveal.value = { stage: 0, win, pts, d };
+    later(() => { if (reveal.value) reveal.value.stage = 1; }, REVEAL_STAGE1_MS);
     later(() => {
       if (!reveal.value) return;
       reveal.value.stage = 2;
       scoreShown.value = [...score.value] as [number, number];
-    }, 2450);
+    }, REVEAL_STAGE2_MS);
 
     // précharge l'affiche de la manche suivante pendant qu'on regarde le verdict
     const nf = deck.value[round.value];

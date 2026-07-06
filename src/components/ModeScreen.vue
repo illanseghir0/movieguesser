@@ -18,10 +18,10 @@ function goCompet() { router.push("/competitif"); }
           <span class="lbl">En local</span>
           <span class="mdesc">un duel à deux, sur le même écran</span>
         </div>
-        <div class="menuRow off" aria-disabled="true">
+        <div class="menuRow" role="button" tabindex="0"
+             @click="router.push('/entre-amis')" @keydown.enter="router.push('/entre-amis')">
           <span class="lbl">Entre amis</span>
-          <span class="soon">Prochainement</span>
-          <span class="mdesc">en ligne, sur invitation</span>
+          <span class="mdesc">un duel en ligne, sur invitation</span>
         </div>
         <div class="menuRow" role="button" tabindex="0"
              @click="goCompet()" @keydown.enter="goCompet()">
