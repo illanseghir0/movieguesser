@@ -86,11 +86,10 @@ Carte de membre, Le club, Admit One). Respecter `prefers-reduced-motion` (`REDUC
 
 ## État actuel et chantier en cours
 
-- ⚠️ **La connexion OTP est déployée côté code mais PAS fonctionnelle** : Supabase
-  n'envoie encore que le lien magique par défaut (template non éditable sans SMTP custom).
-  Étape en cours : l'utilisateur configure Resend (domaine movieguesser.fr à vérifier
-  chez Resend + entrées DNS chez OVH), puis SMTP dans Supabase, puis template avec
-  `{{ .Token }}`. Tant que ce n'est pas fait, tester la connexion échoue naturellement.
+- ✅ **La connexion OTP est pleinement fonctionnelle** (vérifié le 06/07/2026) :
+  Resend configuré (DNS OVH : DKIM/SPF/MX/DMARC en place), SMTP custom dans Supabase,
+  emails envoyés par `noreply@movieguesser.fr` avec le code à 6 chiffres
+  (template de référence : `supabase/email-otp-template.html`).
 - Reste à faire (validé) : favicon + og:image + disclaimer « non affilié à Letterboxd »,
   mode solo, achievements, multijoueur.
 - Le champ `packageManager` pointe pnpm ; Node ≥ 22 requis (CI sur Node 24).

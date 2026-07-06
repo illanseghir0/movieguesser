@@ -46,7 +46,8 @@ export const useProfileStore = defineStore("profile", () => {
     if (!error && created) profile.value = created as Profile;
   }
 
-  /** envoie un code de connexion à 6 chiffres par email
+  /** envoie un code de connexion à usage unique par email — sa longueur
+      est un réglage Supabase (8 chiffres actuellement, l'UI accepte 6-8)
       (crée le compte au premier passage ; pseudo optionnel) */
   async function sendCode(email: string, uname?: string): Promise<string | null> {
     if (!supabase) return "Profils indisponibles sur cette version";

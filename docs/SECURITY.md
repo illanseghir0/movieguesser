@@ -67,10 +67,12 @@ client, pas de backend applicatif à compromettre.
 - **error_events** : insertion ouverte à l'anonyme (plafonnée à 10/session côté client
   seulement). Un acteur malveillant peut spammer la table. Impact = bruit/coût, pas de
   fuite. Ajouter un rate-limit Postgres si ça devient un problème.
-- ~~**record_game spammable**~~ **corrigé** (`supabase/consolidation.sql`) : rate-limit
-  de 20 s entre deux enregistrements (colonne `profiles.last_game_at`) — un script ne
-  fabrique plus des stats en boucle. `challenges.list_slug` a aussi gagné sa FK vers
-  `lists(slug)` : plus de défi pointant une liste inexistante.
+- ~~**record_game spammable**~~ **corrigé et vérifié par l'attaque** (06/07/2026, session
+  de test authentifiée) : deux appels rapprochés → le 2ᵉ est refusé (« parties trop
+  rapprochées », rate-limit 20 s via `profiles.last_game_at`). `challenges.list_slug` a
+  aussi gagné sa FK vers `lists(slug)`. Vérifiés aussi en session réelle : `add_friend`
+  refuse l'auto-ajout et les pseudos inexistants ; `friendships` ne montre que ses
+  propres lignes.
 - **Score compétitif calculé côté client** : la RPC borne (0 à rounds × ceil(films/10)) mais ne
   prouve pas le score — un joueur authentifié et motivé peut soumettre 500 via la
   console. Compromis assumé d'un site statique sans serveur de partie. Mitigations

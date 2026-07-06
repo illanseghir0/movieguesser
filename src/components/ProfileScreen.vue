@@ -250,7 +250,7 @@ function fmtSince(iso: string | undefined) {
         <div class="authAlt">Un code à usage unique arrive par email — pas de mot de passe à retenir.</div>
       </form>
 
-      <!-- étape 2 : le code à 6 chiffres -->
+      <!-- étape 2 : le code reçu par email (longueur = réglage Supabase, 8 actuellement) -->
       <form v-else-if="profile.enabled" style="max-width:400px;margin:0 auto"
             @submit.prevent="verify">
         <div class="formOk" style="text-align:center;margin-bottom:18px">
