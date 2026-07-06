@@ -1,0 +1,22 @@
+<!-- Template « Magic Link » Supabase (Authentication → Email Templates → Magic Link).
+     Affiche le code à 6 chiffres ({{ .Token }}) attendu par l'UI de connexion,
+     avec le lien magique en secours. Styles inline (contrainte email). -->
+<div style="background:#0a0d10;padding:44px 20px;text-align:center;font-family:Georgia,'Times New Roman',serif;color:#f2ead6">
+  <p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#8b9aa7;margin:0 0 10px">
+    MovieGuesser &middot; Admit One
+  </p>
+  <h1 style="font-family:'Arial Narrow',Arial,sans-serif;font-weight:bold;letter-spacing:3px;text-transform:uppercase;font-size:26px;color:#f2ead6;margin:0 0 30px">
+    Ton code d'entr&eacute;e
+  </h1>
+  <p style="font-size:42px;letter-spacing:12px;font-family:'Courier New',monospace;color:#f2ead6;margin:0 0 30px">
+    <strong>{{ .Token }}</strong>
+  </p>
+  <p style="font-style:italic;color:#b9ae97;font-size:14px;line-height:1.7;margin:0 0 26px">
+    Saisis-le sur la page de connexion &mdash; il expire dans une heure.<br>
+    Ou entre directement par le
+    <a href="{{ .ConfirmationURL }}" style="color:#f2ead6">lien magique</a>.
+  </p>
+  <p style="font-size:11px;color:#8b9aa7;margin:0">
+    Tu n'as pas demand&eacute; ce code ? Ignore simplement cet email.
+  </p>
+</div>
